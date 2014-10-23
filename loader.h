@@ -22,7 +22,7 @@ class Loader {
 		void translate_iformat_to_binary(vector<Instruction>* memory, int j, vector<string> tokens, int length, Decoder decoder);
 		
 		int toBinInt(int val);
-		void loader_debug(vector<Instruction>* memory, int index, string format);
+		void loader_debug(vector<Instruction>* memory, int index);
 
 
 };

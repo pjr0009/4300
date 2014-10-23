@@ -78,9 +78,17 @@ int Loader::parse_assembly(vector<Instruction>* memory, Decoder decoder){
 			    translate_rformat_to_binary(memory, j, operands, i, decoder);
 			    j++;
 		    }
-		    if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb")){
+		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb")){
 		    	translate_iformat_to_binary(memory, j, operands, i, decoder);
 			    j++;	
+		    }
+		    else if(operands.size() > 0 && (operands[0] == "b" || operands[0] == "bge"|| operands[0] == "bne"|| operands[0] == "beqz" || operands[0] == "la" || operands[0] == "syscall")){
+		    	// translate_iformat_to_binary(memory, j, operands, i, decoder);
+			    // j++;	
+		    }
+		    else if(operands.size() > 0 && operands[0].back() == ':'){
+		    	memory -> at(j).type = operands[0];
+				loader_debug(memory, j);		    	
 		    }
 		}
 		source_file.close();
@@ -110,7 +118,9 @@ void Loader::translate_rformat_to_binary(vector<Instruction>* memory, int next_m
 		memory -> at(next_memory_slot_index).operands.push_back(decoder.registerEncode[tokens[2]]);
 		// rd
 		memory -> at(next_memory_slot_index).operands.push_back(atoi(tokens[3].c_str()));
-		loader_debug(memory, next_memory_slot_index, "r-format");
+		memory -> at(next_memory_slot_index).type = "r-format";
+
+		loader_debug(memory, next_memory_slot_index);
 	} else {
 		printf("\nPlease check your r-format instructions. it appears an operand is missing for one(or more) instructions.\n");
 	}
@@ -135,7 +145,8 @@ void Loader::translate_iformat_to_binary(vector<Instruction>* memory, int next_m
 			memory -> at(next_memory_slot_index).operands.push_back(decoder.registerEncode[tokens[1]]);			
 		}
 
-		loader_debug(memory, next_memory_slot_index, "i-format");
+		memory -> at(next_memory_slot_index).type = "i-format";
+		loader_debug(memory, next_memory_slot_index);
 	} else {
 		printf("\nPlease check your i-format instructions. it appears an operand is missing for one(or more) instructions.\n");
 	}
@@ -146,15 +157,17 @@ void Loader::translate_iformat_to_binary(vector<Instruction>* memory, int next_m
 
 
 
-void Loader::loader_debug(vector<Instruction>* memory, int index, string format){
-	printf("Instruction: %s, opcode: %d, ", format.c_str(), memory -> at(index).operands[0]);
+void Loader::loader_debug(vector<Instruction>* memory, int index){
+	printf("Instruction: %s", memory -> at(index).type.c_str());
 	// the i'th instruction's operands
-	int last = memory -> at(index).operands.size() - 1;
-    for(int i = 0; i < last; ++i) {
-    	printf("operand %d: %d ", i + 1, memory -> at(index).operands[i + 1]);
+	if(memory -> at(index).operands.size() > 0){
+		printf("opcode: %d ", memory -> at(index).operands[0]);
+		int last = memory -> at(index).operands.size() - 1;
+	    for(int i = 0; i < last; ++i) {
+	    	printf("operand %d: %d", i + 1, memory -> at(index).operands[i + 1]);
 
-    }
+	    }
+	}
     printf("\n");
-
 
 }
