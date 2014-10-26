@@ -9,6 +9,7 @@ class DataPath {
 		bool write_back;
 		int alu_function;
 		int alu_output;
+		int pc;
 		vector<Instruction> memory;
 		Decoder decoder;
 		RegisterFile register_file;

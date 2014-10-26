@@ -4,6 +4,7 @@
 DataPath::DataPath(int text_segment_length){
 	
 	//initialize memory 
+	pc = 0;
 	int i = 0;
 	while(i < text_segment_length){
 		memory.push_back(Instruction());

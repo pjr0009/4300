@@ -1,16 +1,16 @@
 #include "stages.h"
 
-void if_stage(DataPath *data_path, int *pc){
-	Instruction current_instruction = data_path -> memory.at(*pc);
+void if_stage(DataPath *data_path){
+	Instruction current_instruction = data_path -> memory.at(data_path -> pc);
 	// label?
-	while(*pc < data_path -> memory.size() && data_path -> memory.at(*pc).type == "label"){
-		*pc += 1;
-		current_instruction = data_path -> memory.at(*pc);
+	while(data_path -> pc < data_path -> memory.size() && data_path -> memory.at(data_path -> pc).type == "label"){
+		data_path -> pc += 1;
+		current_instruction = data_path -> memory.at(data_path -> pc);
 	}
 	// put instruction at program counter into instruction register
 	data_path -> register_file.instruction_register = current_instruction;
 	// increment pc
-	*pc = *pc +=1;
+	data_path -> pc = (data_path -> pc) + 1;
 	if_debug(*data_path);
 }
 
@@ -36,8 +36,18 @@ void id_stage(DataPath *data_path){
 		id_debug(*data_path);
 		
 
-	} else {
-		data_path -> write_back = true;
+	} else if(opcode == "b"){
+		int last = data_path -> memory.size() - 1;
+	    for(int i = 1; i < last; ++i) {
+	    	if(data_path -> memory.at(i).type == "label"){
+	    		if(data_path -> register_file.instruction_register.label == data_path -> memory.at(i).label){
+	    			//set label operand in instruction to actual offset
+	    			data_path -> register_file.instruction_register.operands[1] = i;
+	    			data_path -> pc = i;
+	    		}
+	    	}
+	    }
+
 	}
 
 }
@@ -46,6 +56,10 @@ void execute_stage(DataPath *data_path){
 	if(opcode == "addi"){
 		data_path -> alu_output = data_path -> alu(data_path -> register_file.instruction_register.operands[1], data_path -> register_file.instruction_register.operands[2]);		
 		data_path -> write_back = true;
+	}
+	else if (opcode == "subi"){
+		data_path -> alu_output = data_path -> alu(data_path -> register_file.instruction_register.operands[1], data_path -> register_file.instruction_register.operands[2]);		
+		data_path -> write_back = true;	
 	}
 }
 

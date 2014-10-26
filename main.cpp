@@ -25,11 +25,9 @@ int main(){
 
 	loader.parse_assembly(&data_path);
 
-    int PC = 0;
-
-    while(PC < data_path.memory.size()){
+    while(data_path.pc < data_path.memory.size()){
     	// instruction fetch
-    	if_stage(&data_path, &PC);
+    	if_stage(&data_path);
     	
 
     	// instruction decode
@@ -40,9 +38,6 @@ int main(){
 
     	//write back
     	wb_stage(&data_path);
-    	// execute
-    	// memory
-    	// write back
 
     	// execute();
     }
