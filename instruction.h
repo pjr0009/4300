@@ -8,6 +8,7 @@ class Instruction {
 
 	public:
 	  string type;
+	  string label; //optional, in realworld would be an binary encoded value
 	  vector<int> operands;
 
 

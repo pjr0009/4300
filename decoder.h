@@ -12,6 +12,7 @@ class Decoder {
 	public:
 		map<string, int> registerEncode;
 		map<int, string> registerDecode;
+		map<int, string> opcodeDecode;
 		Decoder();
 
 };

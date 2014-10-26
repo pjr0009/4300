@@ -1,9 +1,8 @@
 #include <iostream>
 #include "loader.h"
 #include <vector>
-#include "instruction.h"
-#include "decoder.h"
-#include "memory.h"
+#include "data_path.h"
+#include "stages.h"
 using namespace std;
 
 
@@ -15,21 +14,38 @@ int main(){
 	cin >> file_name;
 
 	Loader loader(file_name);
-	vector<Instruction> memory;
-	Decoder decoder;
 
 	int count = loader.text_segment_length();
 
-	// initialize memory with empty instructions
-	int i = 0;
-	while(i < count){
-		memory.push_back(Instruction());
-		count--;
-	}
+	DataPath data_path(count);
+  	
+	cout << endl << "/******** ***************************** ********/" << endl;
+	cout << "/******** LOAD INSTRUCTIONS INTO MEMORY ********/" << endl;
+	cout << "/******** ***************************** ********/" << endl;
 
-	loader.parse_assembly(&memory, decoder);
-    
+	loader.parse_assembly(&data_path);
 
+    int PC = 0;
+
+    while(PC < data_path.memory.size()){
+    	// instruction fetch
+    	if_stage(&data_path, &PC);
+    	
+
+    	// instruction decode
+    	id_stage(&data_path);
+
+    	// execute 
+    	execute_stage(&data_path);
+
+    	//write back
+    	wb_stage(&data_path);
+    	// execute
+    	// memory
+    	// write back
+
+    	// execute();
+    }
 
 
 	return 0;

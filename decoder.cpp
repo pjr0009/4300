@@ -36,7 +36,18 @@ Decoder::Decoder(){
 	registerDecode [01101] = "$t4"; 
 	registerDecode [01110] = "$t5"; 
 	registerDecode [01111] = "$t6"; 
-	registerDecode [10000] = "$t7"; 
+	registerDecode [10000] = "$t7";
+
+	opcodeDecode[00000] = "addi";
+	opcodeDecode[00001] = "subi"; 
+	opcodeDecode[00010] = "li";
+	opcodeDecode[00011] = "lb"; 
+	opcodeDecode[00100] = "b";
+	opcodeDecode[00101] = "bge"; 
+
+
+
+
 
 	
 }

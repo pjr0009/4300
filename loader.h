@@ -3,8 +3,7 @@
 #include <fstream>
 #include <string>
 #include "instruction.h"
-#include "memory.h"
-#include "decoder.h"
+#include "data_path.h"
 #include <map>
 
 
@@ -16,13 +15,14 @@ class Loader {
 	void loader_debug(string instruction, string formatSlot, string token, int binary);
 	public:
 		Loader(string name);
-		int parse_assembly(vector<Instruction>* memory, Decoder decoder);
+		int parse_assembly(DataPath* data_path);
 		int text_segment_length();
-		void translate_rformat_to_binary(vector<Instruction>* memory, int j, vector<string> tokens, int length, Decoder decoder);
-		void translate_iformat_to_binary(vector<Instruction>* memory, int j, vector<string> tokens, int length, Decoder decoder);
+		void translate_rformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);
+		void translate_iformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);
+		void translate_jformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);
 		
 		int toBinInt(int val);
-		void loader_debug(vector<Instruction>* memory, int index);
+		void loader_debug(DataPath data_path, int index);
 
 
 };
