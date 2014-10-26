@@ -14,7 +14,7 @@ Loader::Loader(string name){
 int Loader::text_segment_length(){
 	int i = 0;
 	string line;
-	source_file.open(file_name);
+	source_file.open(file_name.c_str());
 
 
 	if (source_file.is_open())
