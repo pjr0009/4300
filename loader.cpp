@@ -141,19 +141,7 @@ void Loader::translate_jformat_to_binary(DataPath* data_path, int next_memory_sl
 	
 	if(opcode == "b"){
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(00100);
-	    // iterate through memory and replace the offset of label in la
-		int last = data_path -> memory.size() - 1;
-	    // for(int i = 1; i < last; ++i) {
-	    // 	if(memory -> at(i).type == "label"){
-	    // 		if(tokens[1] == memory -> at(i).label){
-	    // 			//set label operand in instruction to actual offset
-	    // 			memory -> at(next_memory_slot_index).operands.push_back(memory -> at(i).operands[0]);
-	    // 		}
-	    // 	}
-	    // }
-
 		data_path -> memory.at(next_memory_slot_index).label = tokens[1];
-
 		data_path -> memory.at(next_memory_slot_index).type = "j-format";
 		loader_debug(*data_path, next_memory_slot_index);
 	} else {
