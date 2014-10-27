@@ -112,6 +112,7 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 	//unless nop
 	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
+			cout << endl << "EXECUTING: " << opcode << endl;
 			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);	
 			data_path -> write_back = true;
 		}
