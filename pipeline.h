@@ -6,6 +6,7 @@ struct if_id_latch {
 struct id_ex_latch {
 	Instruction ir;
 	int alu_function;
+	int syscall_function;
 	string decoded_opcode;
 	int offset;
 	int immediate;

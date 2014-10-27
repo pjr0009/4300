@@ -30,7 +30,7 @@ int main(){
     ex_mem_latch ex_mem;
     mem_wb_latch mem_wb;
 
-    while(data_path.pc < data_path.memory.size()){
+    while(data_path.pc < data_path.memory.size() && data_path.user_mode){
 
     	// instruction fetch
     	if_stage(&data_path, &if_id);

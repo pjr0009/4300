@@ -98,6 +98,10 @@ int Loader::parse_assembly(DataPath* data_path){
 		    	data_path -> memory.at(j).operands.push_back(j); // offset
 				loader_debug(*data_path, j);		
 				j++;    	
+		    } else if(operands.size() > 0 && operands[0] == "syscall"){
+		    	data_path -> memory.at(j).type = "syscall";
+				cout << endl << "syscall" << endl;		
+
 		    }
 		}
 

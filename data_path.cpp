@@ -3,7 +3,8 @@
 
 DataPath::DataPath(int text_segment_length){
 	
-	//initialize memory 
+	//initialize memory, pc and usermode
+	user_mode = true;
 	pc = 0;
 	int i = 0;
 	while(i < text_segment_length){
