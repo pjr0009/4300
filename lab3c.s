@@ -9,12 +9,10 @@ main:
 
 loop:	
 	subi $5, $5, 1
-	add $1, $1, $2
-	add $1, $1, $3
-	add $1, $1, $4
+	
 	# bge  $5, $0, loop
 	# nop
-	# beqz $11, loop # if $11 == 0, branch out of loop.
+	beqz $5, loop # if $5 == 0, branch out of loop.
 
 	add $4, $0, $1
 	li $2, 1

@@ -20,7 +20,15 @@ int DataPath::alu(int a, int b, int op){
 	else if(op == 2){
 		return a-b;
 	}
-	else {
+	else if(op == 3){
+		cout << endl << "EXECUTING BEQZ WITH A = " << a << " & B = " << b << endl;
+		if(a==b){
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	else{
 		return 0;
 	}
 

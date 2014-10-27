@@ -64,7 +64,21 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 	    		}
 	    	}
 	    }
-
+	} else if(opcode == "beqz"){
+		id_ex -> op = 3;
+		int last = data_path -> memory.size() - 1;
+	    for(int i = 1; i < last; ++i) {
+	    	if(data_path -> memory.at(i).type == "label"){
+	    		if(if_id->ir.label == data_path -> memory.at(i).label){
+	    			//update PC (we already set op to 0 so nothing else needs to be done here)
+	    			id_ex -> new_PC = i;
+	    			break;
+	    		}
+	    	}
+	    }
+	    //forward value that will be used for branch comparison (decoded)
+		int rs = if_id->ir.operands[1];
+		id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
 	} else if (opcode == "lb"){
 		id_ex -> op = 0;
 		id_ex->rd = if_id -> ir.operands[1];
@@ -108,6 +122,13 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 			} else{
 				printf("\nUNKNOWN SYSCALL\n");
 			}
+		} else if (opcode == "beqz"){
+			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, 0, id_ex -> op);
+			if(ex_mem -> alu_output == 0){
+				cout << "BRANCH TAKEN" << endl;
+				data_path -> pc = id_ex -> new_PC;
+				data_path -> write_back = false;
+			}
 		}
 	}
 	ex_mem -> rd = id_ex -> rd;
@@ -124,7 +145,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 			return;
 		}
 		// nop if instruction isnt lb *may need to add other instructions here if there are others that use memory*
-		if(opcode != "lb"){
+		if(opcode != "lb" || "beqz"){
 	    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
         	mem_wb -> alu_output = ex_mem -> alu_output;
        		mem_wb -> operand_b = ex_mem -> rt;
