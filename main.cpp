@@ -28,6 +28,7 @@ int main(){
     if_id_latch if_id;
     id_ex_latch id_ex;
     ex_mem_latch ex_mem;
+
     mem_wb_latch mem_wb;
 
     while(data_path.pc < data_path.memory.size() && data_path.user_mode){
@@ -41,12 +42,8 @@ int main(){
 
     	// execute 
     	execute_stage(&data_path, &id_ex, &ex_mem);
-
         // till memory_stage is written
-        mem_wb.decoded_opcode = ex_mem.decoded_opcode;
-        mem_wb.alu_output = ex_mem.alu_output;
-        mem_wb.rt = ex_mem.rt;
-        mem_wb.rd = ex_mem.rd;
+        memory_stage(&data_path, &ex_mem, &mem_wb);
 
     	//write back
     	wb_stage(&data_path, &mem_wb);

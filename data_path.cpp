@@ -13,15 +13,15 @@ DataPath::DataPath(int text_segment_length){
 	}
 };
 
-void DataPath::alu(int a, int b, int alu_function){
-	if(alu_function == 1){
-		alu_output = a+b;
+int DataPath::alu(int a, int b, int op){
+	if(op == 1){
+		return a+b;
 	}
-	else if(alu_function == 2){
-		alu_output = a-b;
+	else if(op == 2){
+		return a-b;
 	}
 	else {
-		
+		return 0;
 	}
 
 }

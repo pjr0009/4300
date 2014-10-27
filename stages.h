@@ -12,3 +12,7 @@ void wb_stage(DataPath *data_path, mem_wb_latch *mem_wb);
 
 void if_debug(DataPath data_path, if_id_latch *if_id);
 void id_debug(DataPath data_path, id_ex_latch *id_ex);
+void wb_debug(DataPath data_path, mem_wb_latch *mem_wb);
+void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_wb);
+
+

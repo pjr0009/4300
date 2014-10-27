@@ -56,7 +56,7 @@ int Loader::parse_assembly(DataPath* data_path){
 		    
 			vector<string> operands; //dynamic number of operands
 		    int i = 0;
-		    stringstream ssin(line);
+			stringstream ssin(line.erase(line.find_last_not_of(" \n\r\t") +1));
 		    while (ssin.good()){
 		    	string temp;
 		        ssin >> temp;
@@ -65,7 +65,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			        if (i == 1 && (operands[0] != "b")){
 			    	  temp.pop_back(); // remove comma separator
 			        }
-			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "bge")){
+			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "bge")){
 			    	  temp.pop_back(); // remove second comma separator
 			        }
 			        operands.push_back(temp);
@@ -78,11 +78,11 @@ int Loader::parse_assembly(DataPath* data_path){
 
 
 		    // translate instruction based on type
-		    if(operands.size() > 0 && (operands[0] == "addi" || operands[0] == "subi")){
+		    if(operands.size() > 0 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add")){
 			    translate_rformat_to_binary(data_path, j, operands, i);
 			    j++;
 		    }
-		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge")){
+		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz")){
 		    	translate_iformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
@@ -90,6 +90,17 @@ int Loader::parse_assembly(DataPath* data_path){
 		    	translate_jformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
+
+		    //syscall
+		    else if(operands.size() > 0 && operands[0] == "syscall"){
+		    	data_path -> memory.at(j).type = "syscall";
+				data_path -> memory.at(j).operands.push_back(01000);
+
+		    	loader_debug(*data_path, j);
+
+		    }
+
+		    //label
 		    else if(operands.size() > 0 && operands[0].back() == ':'){
 		    	operands[0].pop_back();
 		    	data_path -> memory.at(j).type = "label";
@@ -98,11 +109,8 @@ int Loader::parse_assembly(DataPath* data_path){
 		    	data_path -> memory.at(j).operands.push_back(j); // offset
 				loader_debug(*data_path, j);		
 				j++;    	
-		    } else if(operands.size() > 0 && operands[0] == "syscall"){
-		    	data_path -> memory.at(j).type = "syscall";
-				cout << endl << "syscall" << endl;		
+		    } 
 
-		    }
 		}
 
 		source_file.close();
@@ -123,16 +131,30 @@ void Loader::translate_rformat_to_binary(DataPath *data_path, int next_memory_sl
 	if(length == 4){
 		if(opcode == "addi"){
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(00000);
-		} else {
+		} else if (opcode == "subi") {
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(00001);
+		} else if (opcode == "add"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(00110);
+
 		}
-		// rs
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
-		// rt
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
 		// rd
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[3].c_str()));
-		data_path -> memory.at(next_memory_slot_index).type = "r-format";
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
+		// rs
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
+		
+		// rt
+		if(opcode == "add"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[3]]);
+			data_path -> memory.at(next_memory_slot_index).type = "r-format";
+		
+		}
+
+		//otherwise rt is an immediate value
+		else {
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[3].c_str()));
+			data_path -> memory.at(next_memory_slot_index).type = "i-format";
+
+		}
 
 		loader_debug(*data_path, next_memory_slot_index);
 	} else {
@@ -177,6 +199,12 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 	 //    	if()
 	 //    }
 	}
+	else if(tokens[0] == "beqz"){
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(00111);
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
+		data_path -> memory.at(next_memory_slot_index).label = tokens[2];
+
+	}
 
 	else if (opcode == "bge") {
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(00101);
@@ -198,12 +226,15 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 void Loader::loader_debug(DataPath data_path, int index){
 	string type = data_path.memory.at(index).type;
 	vector<int> operands = data_path.memory.at(index).operands;
-	printf("\n Instruction: %s, ", type.c_str());
+	printf("\n Instruction type: %s, ", type.c_str());
 	// the i'th instruction's operands
 	if(operands.size() > 0){
 	    if(type == "label"){
 	    	printf("name: %s, offset: %d ", data_path.memory.at(index).label.c_str(), operands[0]);
 	    } else {
+	    	if(data_path.memory.at(index).label.size() > 0){
+	    		printf("label: %s, ", data_path.memory.at(index).label.c_str());
+	    	}
 			printf("opcode: %s ", data_path.decoder.opcodeDecode[operands[0]].c_str());
 			int last = operands.size() - 1;
 		    for(int i = 0; i < last; ++i) {
