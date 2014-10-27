@@ -12,7 +12,7 @@ class DataPath {
 		vector<Instruction> memory;
 		Decoder decoder;
 		RegisterFile register_file;
-		int alu(int a, int b, int alu_function);
+		void alu(int a, int b, int alu_function);
 		DataPath(int text_segment_length);
 
 };

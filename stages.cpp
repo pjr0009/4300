@@ -30,11 +30,10 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 		}
 		// decode rs
 
-		int rs = if_id->ir.operands[1];
-		int rt = if_id->ir.operands[2];
+		int rs = if_id->ir.operands[2];
+		int rt = if_id->ir.operands[3];
 
-		if_id->ir.operands[1] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-		if_id->ir.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
+		if_id->ir.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
 
 		id_debug(*data_path, id_ex);
 		
@@ -52,11 +51,12 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 	    }
 
 	} else if (opcode == "lb"){
-		int rs = data_path -> register_file.instruction_register.operands[2];
+		int rs = if_id->ir.operands[2];
 
 		// substitue value of register reference with actual register value before heading into execution/write back
 		// from that point we execute as if it were an li instruction
-		data_path -> register_file.instruction_register.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+		id_ex -> ir.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+		data_path -> write_back = true;
 
 	} else if (opcode == "li") {
 		data_path -> write_back = true;
@@ -68,11 +68,13 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem){
 	string opcode = id_ex -> decoded_opcode;
 	if(opcode == "addi"){
-		ex_mem -> alu_output = data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);		
+		data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);	
+		ex_mem -> alu_output = data_path -> alu_output;		
 		data_path -> write_back = true;
 	}
 	else if (opcode == "subi"){
-		ex_mem -> alu_output = data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);	
+		data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);	
+		ex_mem -> alu_output = data_path -> alu_output;
 		data_path -> write_back = true;	
 	}
 	ex_mem -> decoded_opcode = opcode;
