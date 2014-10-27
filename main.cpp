@@ -25,18 +25,31 @@ int main(){
 
 	loader.parse_assembly(&data_path);
 
+    if_id_latch if_id;
+    id_ex_latch id_ex;
+    ex_mem_latch ex_mem;
+    mem_wb_latch mem_wb;
+
     while(data_path.pc < data_path.memory.size()){
+
     	// instruction fetch
-    	if_stage(&data_path);
+    	if_stage(&data_path, &if_id);
     	
 
     	// instruction decode
-    	id_stage(&data_path);
+    	id_stage(&data_path, &if_id, &id_ex);
 
     	// execute 
-    	execute_stage(&data_path);
+    	execute_stage(&data_path, &id_ex, &ex_mem);
+
+        // till memory_stage is written
+        mem_wb.decoded_opcode = ex_mem.decoded_opcode;
+        mem_wb.alu_output = ex_mem.alu_output;
+        mem_wb.rt = ex_mem.rt;
+        mem_wb.rd = ex_mem.rd;
+
     	//write back
-    	wb_stage(&data_path);
+    	wb_stage(&data_path, &mem_wb);
 
     	// execute();
     }

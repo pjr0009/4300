@@ -1,6 +1,6 @@
 #include "stages.h"
 
-void if_stage(DataPath *data_path){
+void if_stage(DataPath *data_path, if_id_latch *if_id){
 	Instruction current_instruction = data_path -> memory.at(data_path -> pc);
 	// label?
 	while(data_path -> pc < data_path -> memory.size() && data_path -> memory.at(data_path -> pc).type == "label"){
@@ -9,31 +9,43 @@ void if_stage(DataPath *data_path){
 	}
 	// put instruction at program counter into instruction register
 	data_path -> register_file.instruction_register = current_instruction;
+	// add current instruction the the if_id_latch
+	if_id -> ir = current_instruction;
 	// increment pc
 	data_path -> pc = (data_path -> pc) + 1;
-	if_debug(*data_path);
+	if_debug(*data_path, if_id);
 }
 
 // Read registers rs and rt in case we need them
 // Compute the branch address in case the instruction is a branch
-void id_stage(DataPath *data_path){
-	string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
+void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
+	string opcode = data_path -> decoder.opcodeDecode[if_id -> ir.operands[0]];
+	id_ex -> decoded_opcode = opcode;
 	if( opcode == "addi" || opcode == "subi"){
+		// set alu function code
+		if(opcode == "addi"){
+			id_ex -> alu_function = 1;
+		} else {
+			id_ex -> alu_function = 2;
+		}
 		// decode rs
 
-		int rs = data_path -> register_file.instruction_register.operands[2];
-		int rt = data_path -> register_file.instruction_register.operands[3];
+		int rs = if_id->ir.operands[1];
+		int rt = if_id->ir.operands[2];
 
-		data_path -> register_file.instruction_register.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-		id_debug(*data_path);
-		data_path -> write_back = true;
+		if_id->ir.operands[1] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+		if_id->ir.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
+
+		id_debug(*data_path, id_ex);
+		
+
 	} else if(opcode == "b"){
 		int last = data_path -> memory.size() - 1;
 	    for(int i = 1; i < last; ++i) {
 	    	if(data_path -> memory.at(i).type == "label"){
-	    		if(data_path -> register_file.instruction_register.label == data_path -> memory.at(i).label){
+	    		if(if_id->ir.label == data_path -> memory.at(i).label){
 	    			//set label operand in instruction to actual offset
-	    			data_path -> register_file.instruction_register.operands[1] = i;
+	    			if_id->ir.operands[1] = i;
 	    			data_path -> pc = i;
 	    		}
 	    	}
@@ -50,37 +62,40 @@ void id_stage(DataPath *data_path){
 		data_path -> write_back = true;
 	}
 
+	id_ex -> ir = if_id -> ir;
+
 }
-void execute_stage(DataPath *data_path){
-	string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
+void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem){
+	string opcode = id_ex -> decoded_opcode;
 	if(opcode == "addi"){
-		data_path -> alu(data_path -> register_file.instruction_register.operands[2], data_path -> register_file.instruction_register.operands[3], 1);		
+		ex_mem -> alu_output = data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);		
+		data_path -> write_back = true;
 	}
 	else if (opcode == "subi"){
-		data_path -> alu(data_path -> register_file.instruction_register.operands[2], data_path -> register_file.instruction_register.operands[3], 2);		
+		ex_mem -> alu_output = data_path -> alu(id_ex -> ir.operands[2], id_ex -> ir.operands[3], id_ex -> alu_function);	
+		data_path -> write_back = true;	
 	}
+	ex_mem -> decoded_opcode = opcode;
+	ex_mem -> rd = data_path -> decoder.registerDecode[id_ex -> ir.operands[1]];
+	ex_mem -> rt = id_ex -> ir.operands[2];
 }
 
 
 
 
-void wb_stage (DataPath *data_path){
+void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
 	if(data_path -> write_back){
 		// load immediate, value already available in instruction
-		string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
-		if(opcode == "li" || opcode == "lb"){
-			string dest_reg = data_path -> decoder.registerDecode[data_path -> register_file.instruction_register.operands[1]];
-			data_path -> register_file.registers[dest_reg] = data_path -> register_file.instruction_register.operands[2];
-			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register " << dest_reg << endl;
-			data_path -> write_back = false;
 
+		string opcode = mem_wb -> decoded_opcode;
+		string dest_reg = mem_wb -> rd;
+		if(opcode == "li"){
+			data_path -> register_file.registers[dest_reg] = mem_wb -> rt;
+			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register" << dest_reg << endl;
 		}
-		else if (opcode == "addi" || opcode == "subi"){
-			string dest_reg = data_path -> decoder.registerDecode[data_path -> register_file.instruction_register.operands[1]];
-			data_path -> register_file.registers[dest_reg] = data_path -> alu_output;
-			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register " << dest_reg <<  endl;
-			data_path -> write_back = false;
-
+		if(opcode == "addi" || opcode == "subi"){
+			data_path -> register_file.registers[dest_reg] = mem_wb -> alu_output;
+			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register" << dest_reg << endl;
 		}
 		// load from data, value shoudl be in mdr
 
@@ -88,11 +103,11 @@ void wb_stage (DataPath *data_path){
 }
 
 
-void if_debug(DataPath data_path){
-	printf("loaded instruction: %s \n", data_path.decoder.opcodeDecode[data_path.register_file.instruction_register.operands[0]].c_str());
+void if_debug(DataPath data_path, if_id_latch *if_id){
+	printf("loaded instruction: %s \n", data_path.decoder.opcodeDecode[if_id->ir.operands[0]].c_str());
 }
 
-void id_debug(DataPath data_path){
-	if(data_path.register_file.instruction_register.type == "r-format")
+void id_debug(DataPath data_path, id_ex_latch *id_ex){
+	if(id_ex->ir.type == "r-format")
 	printf("decoded instruction: %s \n", data_path.decoder.opcodeDecode[data_path.register_file.instruction_register.operands[0]].c_str());
 }
