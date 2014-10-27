@@ -18,7 +18,7 @@ int main(){
 	int count = loader.text_segment_length();
 
 	DataPath data_path(count);
-  	
+
 	cout << endl << "/******** ***************************** ********/" << endl;
 	cout << "/******** LOAD INSTRUCTIONS INTO MEMORY ********/" << endl;
 	cout << "/******** ***************************** ********/" << endl;
@@ -35,7 +35,6 @@ int main(){
 
     	// execute 
     	execute_stage(&data_path);
-
     	//write back
     	wb_stage(&data_path);
 

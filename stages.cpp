@@ -19,23 +19,14 @@ void if_stage(DataPath *data_path){
 void id_stage(DataPath *data_path){
 	string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
 	if( opcode == "addi" || opcode == "subi"){
-		// set alu function code
-		if(opcode == "addi"){
-			data_path -> alu_function = 1;
-		} else {
-			data_path -> alu_function = 2;
-		}
 		// decode rs
 
-		int rs = data_path -> register_file.instruction_register.operands[1];
-		int rt = data_path -> register_file.instruction_register.operands[2];
+		int rs = data_path -> register_file.instruction_register.operands[2];
+		int rt = data_path -> register_file.instruction_register.operands[3];
 
-		data_path -> register_file.instruction_register.operands[1] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-		data_path -> register_file.instruction_register.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-
+		data_path -> register_file.instruction_register.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
 		id_debug(*data_path);
-		
-
+		data_path -> write_back = true;
 	} else if(opcode == "b"){
 		int last = data_path -> memory.size() - 1;
 	    for(int i = 1; i < last; ++i) {
@@ -48,18 +39,25 @@ void id_stage(DataPath *data_path){
 	    	}
 	    }
 
+	} else if (opcode == "lb"){
+		int rs = data_path -> register_file.instruction_register.operands[2];
+
+		// substitue value of register reference with actual register value before heading into execution/write back
+		// from that point we execute as if it were an li instruction
+		data_path -> register_file.instruction_register.operands[2] = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+
+	} else if (opcode == "li") {
+		data_path -> write_back = true;
 	}
 
 }
 void execute_stage(DataPath *data_path){
 	string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
 	if(opcode == "addi"){
-		data_path -> alu_output = data_path -> alu(data_path -> register_file.instruction_register.operands[1], data_path -> register_file.instruction_register.operands[2]);		
-		data_path -> write_back = true;
+		data_path -> alu(data_path -> register_file.instruction_register.operands[2], data_path -> register_file.instruction_register.operands[3], 1);		
 	}
 	else if (opcode == "subi"){
-		data_path -> alu_output = data_path -> alu(data_path -> register_file.instruction_register.operands[1], data_path -> register_file.instruction_register.operands[2]);		
-		data_path -> write_back = true;	
+		data_path -> alu(data_path -> register_file.instruction_register.operands[2], data_path -> register_file.instruction_register.operands[3], 2);		
 	}
 }
 
@@ -70,19 +68,22 @@ void wb_stage (DataPath *data_path){
 	if(data_path -> write_back){
 		// load immediate, value already available in instruction
 		string opcode = data_path -> decoder.opcodeDecode[data_path -> register_file.instruction_register.operands[0]];
-		string dest_reg = data_path -> decoder.registerDecode[data_path -> register_file.instruction_register.operands[1]];
-		if(opcode == "li"){
+		if(opcode == "li" || opcode == "lb"){
+			string dest_reg = data_path -> decoder.registerDecode[data_path -> register_file.instruction_register.operands[1]];
 			data_path -> register_file.registers[dest_reg] = data_path -> register_file.instruction_register.operands[2];
-			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register" << endl;
+			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register " << dest_reg << endl;
+			data_path -> write_back = false;
+
 		}
-		if(opcode == "addi" || opcode == "subi"){
+		else if (opcode == "addi" || opcode == "subi"){
+			string dest_reg = data_path -> decoder.registerDecode[data_path -> register_file.instruction_register.operands[1]];
 			data_path -> register_file.registers[dest_reg] = data_path -> alu_output;
-			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register" << endl;
+			cout << "wrote: " << data_path -> register_file.registers[dest_reg] << " to register " << dest_reg <<  endl;
+			data_path -> write_back = false;
 
 		}
 		// load from data, value shoudl be in mdr
 
-		data_path -> write_back = false;
 	}
 }
 

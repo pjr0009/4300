@@ -32,12 +32,12 @@ length_loop:			# length of the string
 	# lb $t3, ($t2)		# load the byte at addr B into $t3.
 	# beqz $t3, end_length_loop # if $t3 == 0, branch out of loop.
 
-	addi $a1, $v0, 1	# otherwise, increment B,
+	addi $a1, $a1, 1	# otherwise, increment B,
 	# b length_loop		# and repeat the loop.
-	addi $a1, $v0, 1	# otherwise, increment B,
+	addi $a1, $a1, 1	# otherwise, increment B,
 
 # end_length_loop:
-	subi $t2, $t2, 2	# subtract 2 to move B back past 
+	# subi $t2, $t2, 2	# subtract 2 to move B back past 
 
 # # the '\0' and '\n'.
 

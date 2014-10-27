@@ -7,13 +7,12 @@
 class DataPath {
 	public:
 		bool write_back;
-		int alu_function;
 		int alu_output;
 		int pc;
 		vector<Instruction> memory;
 		Decoder decoder;
 		RegisterFile register_file;
-		int alu(int a, int b);
+		void alu(int a, int b, int alu_function);
 		DataPath(int text_segment_length);
 
 };
