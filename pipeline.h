@@ -1,6 +1,9 @@
 #include "instruction.h"
+#define EMPTY_LATCH "NULL"
+
 struct if_id_latch {
 	Instruction ir;
+	string decoded_opcode;
 };
 
 struct id_ex_latch {

@@ -19,6 +19,11 @@ void if_stage(DataPath *data_path, if_id_latch *if_id){
 // Read registers rs and rt in case we need them
 // Compute the branch address in case the instruction is a branch
 void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
+	if(if_id->decoded_opcode == EMPTY_LATCH) {
+		id_ex->decoded_opcode = EMPTY_LATCH;
+		//No operation to be performed
+		return;
+	}
 	string opcode = data_path -> decoder.opcodeDecode[if_id -> ir.operands[0]];
 	id_ex -> decoded_opcode = opcode;
 	if( opcode == "addi" || opcode == "subi" || opcode == "add"){
@@ -85,6 +90,11 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 }
 void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem){
 	string opcode = id_ex -> decoded_opcode;
+	ex_mem -> decoded_opcode = opcode;
+	if( opcode == EMPTY_LATCH) {
+		//No operation to be performed
+		return;
+	}
 	//unless nop
 	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
@@ -100,7 +110,6 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 			}
 		}
 	}
-	ex_mem -> decoded_opcode = opcode;
 	ex_mem -> rd = id_ex -> rd;
 	ex_mem -> rt = id_ex -> rt;
 	id_ex -> syscall_function = 0; // reset syscall function
@@ -109,6 +118,11 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 
 void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_wb){
 		string opcode = ex_mem ->decoded_opcode;
+		if( opcode == EMPTY_LATCH) {
+			mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
+			//No operation to be performed
+			return;
+		}
 		// nop if instruction isnt lb *may need to add other instructions here if there are others that use memory*
 		if(opcode != "lb"){
 	    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
@@ -125,6 +139,10 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
 	if(data_path -> write_back){
 		// load immediate, value already available in instruction
 		string opcode = mem_wb -> decoded_opcode;
+		if( opcode == EMPTY_LATCH) {
+			//No operation to be performed
+			return;
+		}
 		string dest_reg = data_path -> decoder.registerDecode[mem_wb -> rd];
 
 		if(opcode == "li"){
