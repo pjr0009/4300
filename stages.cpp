@@ -27,7 +27,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 			id_ex -> op = 1;
 		} else if (opcode == "subi") {
 			id_ex -> op = 2;
-		}
+		} 
 		
 		id_ex->rd = if_id -> ir.operands[1];
 		// decode rs
@@ -71,6 +71,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 
 	} else if (opcode == "li") {
 		id_ex -> op = 0;
+		id_ex -> syscall_function = 0; // erase if still there
 		id_ex->rd = if_id -> ir.operands[1];
 		id_ex->rt = if_id -> ir.operands[2];
 		data_path -> write_back = true;
@@ -85,23 +86,24 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem){
 	string opcode = id_ex -> decoded_opcode;
 	//unless nop
-	if(id_ex -> op > 0){
+	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
 			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);	
 			data_path -> write_back = true;
 		}
 		else if (opcode == "syscall"){
 			if(id_ex -> syscall_function == 10){
-				printf("syscall function 10 called, need to implement what it actually does\n");
+				printf("\nSYSCALL EXIT CALLED: EXITING...\n");
+				data_path -> user_mode = false;
 			} else{
-				cout << "sycall function" << id_ex -> syscall_function << endl;
+				printf("\nUNKNOWN SYSCALL\n");
 			}
 		}
 	}
 	ex_mem -> decoded_opcode = opcode;
 	ex_mem -> rd = id_ex -> rd;
 	ex_mem -> rt = id_ex -> rt;
-
+	id_ex -> syscall_function = 0; // reset syscall function
 }
 
 

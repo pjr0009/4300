@@ -18,10 +18,10 @@ loop:
 
 	add $4, $0, $1
 	li $2, 1
-	# syscall
+	syscall
 	
 	li $2, 10
-	# syscall
+	syscall
 
 
 .data
