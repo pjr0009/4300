@@ -3,7 +3,7 @@
 
 struct if_id_latch {
 	Instruction ir;
-	string decoded_opcode;
+	bool empty;
 };
 
 struct id_ex_latch {

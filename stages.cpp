@@ -11,6 +11,8 @@ void if_stage(DataPath *data_path, if_id_latch *if_id){
 	data_path -> register_file.instruction_register = current_instruction;
 	// add current instruction the the if_id_latch
 	if_id -> ir = current_instruction;
+	if_id -> empty = false;
+
 	// increment pc
 	data_path -> pc = (data_path -> pc) + 1;
 	if_debug(*data_path, if_id);
@@ -19,12 +21,13 @@ void if_stage(DataPath *data_path, if_id_latch *if_id){
 // Read registers rs and rt in case we need them
 // Compute the branch address in case the instruction is a branch
 void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
-	if(if_id->decoded_opcode == EMPTY_LATCH) {
+	if(if_id->empty) {
 		id_ex->decoded_opcode = EMPTY_LATCH;
 		//No operation to be performed
 		return;
 	}
 	string opcode = data_path -> decoder.opcodeDecode[if_id -> ir.operands[0]];
+	//cout << "OPCODE IS " << opcode << endl;
 	id_ex -> decoded_opcode = opcode;
 	if( opcode == "addi" || opcode == "subi" || opcode == "add"){
 		// set alu function code
@@ -50,7 +53,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 
 
 
-		id_debug(*data_path, id_ex);
+		//id_debug(*data_path, id_ex);
 		
 
 	} else if(opcode == "b"){
@@ -76,7 +79,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 	    		}
 	    	}
 	    }
-	    //forward value that will be used for branch comparison (decoded)
+	    //forward value that will be used for branch comparison (decoded
 		int rs = if_id->ir.operands[1];
 		id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
 	} else if (opcode == "lb"){
@@ -100,6 +103,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 		id_ex -> syscall_function = data_path -> register_file.registers["$2"];
 	}
 
+		id_debug(*data_path, id_ex);
 
 }
 void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem){
@@ -112,16 +116,16 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 	//unless nop
 	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
-			cout << endl << "EXECUTING: " << opcode << endl;
+			cout << "EXECUTING: " << opcode << endl;
 			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);	
 			data_path -> write_back = true;
 		}
 		else if (opcode == "syscall"){
 			if(id_ex -> syscall_function == 10){
-				printf("\nSYSCALL EXIT CALLED: EXITING...\n");
+				printf("SYSCALL EXIT CALLED: EXITING...\n");
 				data_path -> user_mode = false;
 			} else{
-				printf("\nUNKNOWN SYSCALL\n");
+				printf("UNKNOWN SYSCALL\n");
 			}
 		} else if (opcode == "beqz"){
 			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, 0, id_ex -> op);
@@ -132,6 +136,7 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 			}
 		}
 	}
+	cout << "EXE STAGE - NOTHING TO EXECUTE FOR OPCODE: " << opcode << endl;
 	ex_mem -> rd = id_ex -> rd;
 	ex_mem -> rt = id_ex -> rt;
 	id_ex -> syscall_function = 0; // reset syscall function
@@ -147,11 +152,15 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 		}
 		// nop if instruction isnt lb *may need to add other instructions here if there are others that use memory*
 		if(opcode != "lb" || "beqz"){
+			cout << "MEM STAGE - MEM_WB BEING SET" << endl;
 	    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
         	mem_wb -> alu_output = ex_mem -> alu_output;
        		mem_wb -> operand_b = ex_mem -> rt;
         	mem_wb -> rd = ex_mem -> rd;
 
+		}
+		else {
+			cout << "MEM STAGE - MEM_WB IS NOT BEING SET" << endl;
 		}
 
 }
@@ -177,22 +186,26 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
 		wb_debug(*data_path, mem_wb);
 
 	}
+	else {
+		cout << "WB STAGE: NOTHING TO WRITE BACK" << endl;
+	}
+
 	data_path -> write_back = false;
 }
 
 
 void if_debug(DataPath data_path, if_id_latch *if_id){
-	printf("\nIF STAGE - INSTRUCTION FETCHED: %s \n", data_path.decoder.opcodeDecode[if_id->ir.operands[0]].c_str());
+	printf("IF STAGE - INSTRUCTION FETCHED: %s \n", data_path.decoder.opcodeDecode[if_id->ir.operands[0]].c_str());
 }
 
 void id_debug(DataPath data_path, id_ex_latch *id_ex){
 	string opcode = id_ex->decoded_opcode;
-	if(opcode == "add" || opcode == "addi" || opcode == "li" || opcode == "lb" || opcode == "subi"){
-		printf("\nID STAGE - INSTUCTION DECODED: %s, ALU OP: %d \n", id_ex -> decoded_opcode.c_str(), id_ex -> op);
-	}
+	//if(opcode == "add" || opcode == "addi" || opcode == "li" || opcode == "lb" || opcode == "subi"){
+		printf("ID STAGE - INSTUCTION DECODED: %s, ALU OP: %d \n", id_ex -> decoded_opcode.c_str(), id_ex -> op);
+	//}
 }
 
 void wb_debug(DataPath data_path, mem_wb_latch *mem_wb){
 	string dest_reg = data_path.decoder.registerDecode[mem_wb -> rd];
-	cout << endl << "WB STAGE: wrote - " << data_path.register_file.registers[dest_reg] << " to register - " << dest_reg << endl;
+	cout << "WB STAGE: wrote - " << data_path.register_file.registers[dest_reg] << " to register - " << dest_reg << endl;
 }
