@@ -6,7 +6,6 @@
 #include "decoder.h"
 class DataPath {
 	public:
-		bool write_back;
 		bool user_mode;
 		int alu_output;
 		int pc;

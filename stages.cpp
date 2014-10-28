@@ -89,14 +89,12 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 		// substitue value of register reference with actual register value before heading into execution/write back
 		// from that point we execute as if it were an li instruction
 		id_ex -> rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-		data_path -> write_back = true;
 
 	} else if (opcode == "li") {
 		id_ex -> op = 0;
 		id_ex -> syscall_function = 0; // erase if still there
 		id_ex->rd = if_id -> ir.operands[1];
 		id_ex->rt = if_id -> ir.operands[2];
-		data_path -> write_back = true;
 	} else if (opcode == "syscall"){
 		id_ex -> op = 0; //nop
 		// put $v0 into id_ex.syscall_function
@@ -118,7 +116,6 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
 			cout << "EXECUTING: " << opcode << endl;
 			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);	
-			data_path -> write_back = true;
 		}
 		else if (opcode == "syscall"){
 			if(id_ex -> syscall_function == 10){
@@ -132,7 +129,6 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 			if(ex_mem -> alu_output == 0){
 				cout << "BRANCH TAKEN" << endl;
 				data_path -> pc = id_ex -> new_PC;
-				data_path -> write_back = false;
 			}
 		}
 	}
@@ -167,7 +163,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 
 
 void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
-	if(data_path -> write_back){
+	if (mem_wb -> rd != NULL){
 		// load immediate, value already available in instruction
 		string opcode = mem_wb -> decoded_opcode;
 		if( opcode == EMPTY_LATCH) {
@@ -185,12 +181,10 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
 		// load from data, value shoudl be in mdr
 		wb_debug(*data_path, mem_wb);
 
-	}
+	} 
 	else {
 		cout << "WB STAGE: NOTHING TO WRITE BACK" << endl;
 	}
-
-	data_path -> write_back = false;
 }
 
 
