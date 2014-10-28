@@ -17,6 +17,8 @@ class Loader {
 		Loader(string name);
 		int parse_assembly(DataPath* data_path);
 		int text_segment_length();
+		int data_segment_length();
+
 		void translate_rformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);
 		void translate_iformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);
 		void translate_jformat_to_binary(DataPath* data_path, int j, vector<string> tokens, int length);

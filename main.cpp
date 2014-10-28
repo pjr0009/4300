@@ -16,6 +16,8 @@ int main(){
 	Loader loader(file_name);
 
 	int count = loader.text_segment_length();
+    int data_segment_length = loader.data_segment_length();
+
 
 	DataPath data_path(count);
 
@@ -78,7 +80,7 @@ int main(){
         cout << endl;
     }
 
-    cout << "FLUSHING PIPELINE" << endl << endl;
+    cout << endl << endl << "FLUSHING PIPELINE" << endl << endl;
 
     //flush pipeline
     while(in_pipeline > 0){
@@ -94,7 +96,7 @@ int main(){
             wb_stage(&data_path, &old_mem_wb, &in_pipeline);
             
             cycle++;
-            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
             break;
 
           // 2 instructions still in pipeline
@@ -107,7 +109,7 @@ int main(){
             old_mem_wb = new_mem_wb;
             
             cycle++;
-            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
             break;
 
           // 3 instructions in pipeline
@@ -124,7 +126,7 @@ int main(){
             old_mem_wb = new_mem_wb;
             
             cycle++;
-            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
             break;
 
           case 4:
@@ -145,7 +147,7 @@ int main(){
             old_mem_wb = new_mem_wb;
             
             cycle++;
-            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
             break;
             }
     }

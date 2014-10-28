@@ -44,6 +44,38 @@ int Loader::text_segment_length(){
 	return i;
 }
 
+int Loader::data_segment_length(){
+	int i = 0;
+	string line;
+	source_file.open(file_name.c_str());
+
+
+	if (source_file.is_open())
+		{
+			bool in_data_segment = false;
+			while ( getline (source_file, line) )
+				{
+		    		string token;
+		    		stringstream ssin(line);
+					if(ssin.good()){
+						ssin >> token;
+					}
+			    	if(token == ".text"){
+			    		in_data_segment = false;
+			    	}
+			    	else if (token == ".data"){
+			    		in_data_segment = true;
+			    	}
+			    	if(in_data_segment){
+			    		if (token[0] != '#' && token[0] != '\0' && token[0] != '.'){
+			    			i++;
+			    		}
+			    	}
+				}
+		}
+	source_file.close();
+	return i;
+}
 
 
 // open file, read lines, parse into instruction, store in memory unit
