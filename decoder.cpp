@@ -48,6 +48,7 @@ Decoder::Decoder(){
 	opcodeDecode[00111] = "beqz";
 	opcodeDecode[01000] = "syscall";
 	opcodeDecode[01001] = "bne";
+	opcodeDecode[01011] = "la";
 	opcodeDecode[11111] = "nop";
 
 

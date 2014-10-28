@@ -263,7 +263,12 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 	
 	//ADDI, SUBI instructions
 	if(tokens[0] == "li" || tokens[0] == "la"){
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(00010);
+		if(tokens[0] == "li"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(00010);
+		} else if(tokens[0] == "la"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(01011);
+
+		}
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[2].c_str()));
 	}
