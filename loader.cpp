@@ -100,6 +100,13 @@ int Loader::parse_assembly(DataPath* data_path){
 
 		    }
 
+		    else if(operands.size() > 0 && operands[0] == "nop"){
+		    	data_path -> memory.at(j).type = "nop";
+		    	data_path -> memory.at(j).operands.push_back(11111);
+		    	loader_debug(*data_path, j);
+		    	j++;
+		    }
+
 		    //label
 		    else if(operands.size() > 0 && operands[0].back() == ':'){
 		    	operands[0].pop_back();

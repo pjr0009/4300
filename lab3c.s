@@ -6,6 +6,7 @@ main:
 	li $2, 1
 	li $3, 1
 	li $4, 4
+	nop
 	li $5, 1 
 	li $6, 1
 loop:	

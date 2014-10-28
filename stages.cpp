@@ -27,6 +27,12 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 		//No operation to be performed
 		return;
 	}
+	else if (if_id->ir.type == "nop") {
+		id_ex->decoded_opcode = "nop";
+		cout << "ID STAGE: NOP ENCOUNTERED" << endl;
+		return;
+	}
+
 	string opcode = data_path -> decoder.opcodeDecode[if_id -> ir.operands[0]];
 	//cout << "OPCODE IS " << opcode << endl;
 	id_ex -> decoded_opcode = opcode;
@@ -112,6 +118,11 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 		//No operation to be performed
 		return;
 	}
+	else if (opcode == "nop") {
+		ex_mem->decoded_opcode = "nop";
+		cout << "EXE STAGE: NOP ENCOUNTERED" << endl;
+		return;
+	}
 	//unless nop
 	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
@@ -149,6 +160,11 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 			//No operation to be performed
 			return;
 		}
+		else if (opcode == "nop") {
+			mem_wb->decoded_opcode = "nop";
+			cout << "MEM STAGE: NOP ENCOUNTERED" << endl;
+			return;
+		}
 		// nop if instruction isnt lb *may need to add other instructions here if there are others that use memory*
 		if(opcode != "lb" || "beqz"){
 			cout << "MEM STAGE - MEM_WB BEING SET" << endl;
@@ -173,6 +189,12 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 			//No operation to be performed
 			return;
 		}
+		if (opcode == "nop") {
+			//No operation to be performed but instruction has moved through the pipe
+			*count = (*count) - 1;
+			cout << "WB STAGE: NOP ENCOUNTERED" << endl;
+			return;
+		}
 		string dest_reg = data_path -> decoder.registerDecode[mem_wb -> rd];
 
 		if(opcode == "li"){
@@ -183,7 +205,7 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 		}
 		// load from data, value shoudl be in mdr
 		wb_debug(*data_path, mem_wb);
-		*count = *count - 1; 
+		*count = (*count) - 1; 
 
 	} 
 	else {

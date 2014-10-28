@@ -36,7 +36,7 @@ int main(){
 
     mem_wb_latch old_mem_wb;
     old_mem_wb.decoded_opcode = EMPTY_LATCH;
-    int cycle = 0;
+    int cycle = 1;
     //increment upon entering, decrement when leaving
     int in_pipeline = 0;
 
@@ -69,13 +69,16 @@ int main(){
         memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
         old_ex_mem = new_ex_mem;
 
-        cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
+        cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
     	//write back
     	wb_stage(&data_path, &old_mem_wb, &in_pipeline);
+
         old_mem_wb = new_mem_wb;
         cycle++;
         cout << endl;
     }
+
+    cout << "FLUSHING PIPELINE" << endl << endl;
 
     //flush pipeline
     while(in_pipeline > 0){
@@ -87,75 +90,65 @@ int main(){
         switch(in_pipeline){
           //last instruction in pipeline
           case 1:
-            old_if_id.empty = true;
-            old_id_ex.decoded_opcode = EMPTY_LATCH;
-            old_ex_mem.decoded_opcode = EMPTY_LATCH;
-
-            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-            //write back
+            cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
             wb_stage(&data_path, &old_mem_wb, &in_pipeline);
-            old_mem_wb = new_mem_wb;
+            
+            cycle++;
+            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            break;
+
           // 2 instructions still in pipeline
           case 2:
-            old_if_id.empty = true;
-            old_id_ex.decoded_opcode = EMPTY_LATCH;
             cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-            // till memory_stage is written
             memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
-            old_ex_mem = new_ex_mem;
 
-            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-            //write back
+            cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
             wb_stage(&data_path, &old_mem_wb, &in_pipeline);
             old_mem_wb = new_mem_wb;
-            cycle++;
-          // 3 instructions in pipeline
-          case 3:
-            old_if_id.empty = true;
             
+            cycle++;
+            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            break;
+
+          // 3 instructions in pipeline
+          case 3:            
             cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
-            // execute 
             execute_stage(&data_path, &old_id_ex, &new_ex_mem);
-            old_id_ex = new_id_ex;
 
             cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-            // till memory_stage is written
             memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
             old_ex_mem = new_ex_mem;
 
-            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-            //write back
+            cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
             wb_stage(&data_path, &old_mem_wb, &in_pipeline);
             old_mem_wb = new_mem_wb;
+            
             cycle++;
+            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            break;
 
           case 4:
             cout << "STARTING ID_STAGE CYCLE " << cycle << endl;
-            // instruction decode
             id_stage(&data_path, &old_if_id, &new_id_ex);
             old_if_id = new_if_id;
 
             cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
-            // execute 
             execute_stage(&data_path, &old_id_ex, &new_ex_mem);
             old_id_ex = new_id_ex;
 
             cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-            // till memory_stage is written
             memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
             old_ex_mem = new_ex_mem;
 
-            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-            //write back
+            cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
             wb_stage(&data_path, &old_mem_wb, &in_pipeline);
             old_mem_wb = new_mem_wb;
+            
             cycle++;
-
+            cout <<  "Pipeline Count is: " << in_pipeline << endl << endl;
+            break;
             }
-            cycle++;
-
     }
-
 
 	return 0;
 }

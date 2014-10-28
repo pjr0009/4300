@@ -8,7 +8,7 @@ class Instruction {
 
 	public:
 
-	  // type field is going to either be r-format, i-format, j-format, label, or syscall
+	  // type field is going to either be r-format, i-format, j-format, label, nop, or syscall
 	  string type;
 
 	  // if the type of the instruction is label, this will be the label value
