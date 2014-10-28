@@ -44,6 +44,9 @@ int main(){
         id_ex_latch new_id_ex;
         if_id_latch new_if_id;
 
+        //data_path.memory_write(12, "HELLO WORLD");
+        //cout << data_path.memory_read(12) << endl;
+
         cout << "STARTING IF_STAGE CYCLE " << cycle << endl;
     	// instruction fetch
     	if_stage(&data_path, &new_if_id);

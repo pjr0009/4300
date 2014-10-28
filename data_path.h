@@ -11,7 +11,12 @@ class DataPath {
 		int pc;
 		vector<Instruction> memory;
 		Decoder decoder;
-		RegisterFile register_file;
+		RegisterFile register_file;		
+		map<int, string> data_memory;
+
+
+		int memory_write(int addr, string data);
+		string memory_read(int addr);
 		int alu(int a, int b, int op);
 		DataPath(int text_segment_length);
 

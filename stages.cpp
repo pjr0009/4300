@@ -163,7 +163,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 
 
 void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
-	if (mem_wb -> rd != NULL){
+	if (mem_wb -> rd){
 		// load immediate, value already available in instruction
 		string opcode = mem_wb -> decoded_opcode;
 		if( opcode == EMPTY_LATCH) {

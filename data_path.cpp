@@ -13,6 +13,24 @@ DataPath::DataPath(int text_segment_length){
 	}
 };
 
+int DataPath::memory_write(int addr, string data){
+	data_memory.insert(std::pair<int, string>(addr, data));
+
+}
+
+string DataPath::memory_read(int addr)
+{
+	string out;
+	try {
+		out = data_memory.at(addr);
+	}
+	catch (int e){
+		cout << "INVALID MEMORY ACCESS" << endl;
+	}
+
+	return out;
+}
+
 int DataPath::alu(int a, int b, int op){
 	if(op == 1){
 		return a+b;
