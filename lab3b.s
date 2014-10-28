@@ -81,7 +81,7 @@ exit:				# exit the program
 	syscall			# make the system call.
 
 
-	.data
-0: .asciiz "The string is a palindrome.\n"
-1: .asciiz "The string is not a palindrome.\n"
-2: .space 1024	# reserve 1024 bytes for the string.
+.data
+	0: .asciiz "The string is a palindrome.\n"
+	1: .asciiz "The string is not a palindrome.\n"
+	2: .space 1024	# reserve 1024 bytes for the string.
