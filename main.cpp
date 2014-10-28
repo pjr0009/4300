@@ -37,8 +37,11 @@ int main(){
     mem_wb_latch old_mem_wb;
     old_mem_wb.decoded_opcode = EMPTY_LATCH;
     int cycle = 0;
-    while(data_path.pc < data_path.memory.size() && data_path.user_mode){
+    //increment upon entering, decrement when leaving
+    int in_pipeline = 0;
 
+    while(data_path.pc < data_path.memory.size() && data_path.user_mode){
+        in_pipeline ++;
         mem_wb_latch new_mem_wb;
         ex_mem_latch new_ex_mem;
         id_ex_latch new_id_ex;
@@ -66,12 +69,97 @@ int main(){
         memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
         old_ex_mem = new_ex_mem;
 
-        cout << "STARTING WB_STAGE CYCLE " << cycle << endl;
+        cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
     	//write back
-    	wb_stage(&data_path, &old_mem_wb);
+    	wb_stage(&data_path, &old_mem_wb, &in_pipeline);
         old_mem_wb = new_mem_wb;
         cycle++;
         cout << endl;
+    }
+
+    //flush pipeline
+    while(in_pipeline > 0){
+        mem_wb_latch new_mem_wb;
+        ex_mem_latch new_ex_mem;
+        id_ex_latch new_id_ex;
+        if_id_latch new_if_id;
+
+        switch(in_pipeline){
+          //last instruction in pipeline
+          case 1:
+            old_if_id.empty = true;
+            old_id_ex.decoded_opcode = EMPTY_LATCH;
+            old_ex_mem.decoded_opcode = EMPTY_LATCH;
+            old_mem_wb.decoded_opcode = EMPTY_LATCH;
+
+            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
+            //write back
+            wb_stage(&data_path, &old_mem_wb, &in_pipeline);
+            old_mem_wb = new_mem_wb;
+          // 2 instructions still in pipeline
+          case 2:
+            old_if_id.empty = true;
+            old_id_ex.decoded_opcode = EMPTY_LATCH;
+            old_ex_mem.decoded_opcode = EMPTY_LATCH;
+
+            cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
+            // till memory_stage is written
+            memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
+            old_ex_mem = new_ex_mem;
+
+            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
+            //write back
+            wb_stage(&data_path, &old_mem_wb, &in_pipeline);
+            old_mem_wb = new_mem_wb;
+            cycle++;
+          // 3 instructions in pipeline
+          case 3:
+            old_if_id.empty = true;
+            old_id_ex.decoded_opcode = EMPTY_LATCH;
+            
+            cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
+            // execute 
+            execute_stage(&data_path, &old_id_ex, &new_ex_mem);
+            old_id_ex = new_id_ex;
+
+            cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
+            // till memory_stage is written
+            memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
+            old_ex_mem = new_ex_mem;
+
+            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
+            //write back
+            wb_stage(&data_path, &old_mem_wb, &in_pipeline);
+            old_mem_wb = new_mem_wb;
+            cycle++;
+
+          case 4:
+            if_id_latch old_if_id;
+            old_if_id.empty = true;
+            cout << "STARTING ID_STAGE CYCLE " << cycle << endl;
+            // instruction decode
+            id_stage(&data_path, &old_if_id, &new_id_ex);
+            old_if_id = new_if_id;
+
+            cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
+            // execute 
+            execute_stage(&data_path, &old_id_ex, &new_ex_mem);
+            old_id_ex = new_id_ex;
+
+            cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
+            // till memory_stage is written
+            memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
+            old_ex_mem = new_ex_mem;
+
+            cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
+            //write back
+            wb_stage(&data_path, &old_mem_wb, &in_pipeline);
+            old_mem_wb = new_mem_wb;
+            cycle++;
+
+            }
+            cycle++;
+
     }
 
 

@@ -14,8 +14,9 @@ void if_stage(DataPath *data_path, if_id_latch *if_id){
 	if_id -> empty = false;
 
 	// increment pc
-	data_path -> pc = (data_path -> pc) + 1;
 	if_debug(*data_path, if_id);
+	data_path -> pc = (data_path -> pc) + 1;
+
 }
 
 // Read registers rs and rt in case we need them
@@ -131,8 +132,10 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 				data_path -> pc = id_ex -> new_PC;
 			}
 		}
+	}else {
+		cout << "EXE STAGE - NOTHING TO EXECUTE FOR OPCODE: " << opcode << endl;
+
 	}
-	cout << "EXE STAGE - NOTHING TO EXECUTE FOR OPCODE: " << opcode << endl;
 	ex_mem -> rd = id_ex -> rd;
 	ex_mem -> rt = id_ex -> rt;
 	id_ex -> syscall_function = 0; // reset syscall function
@@ -162,7 +165,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 }
 
 
-void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
+void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 	if (mem_wb -> rd){
 		// load immediate, value already available in instruction
 		string opcode = mem_wb -> decoded_opcode;
@@ -180,11 +183,13 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb){
 		}
 		// load from data, value shoudl be in mdr
 		wb_debug(*data_path, mem_wb);
+		*count = *count - 1; 
 
 	} 
 	else {
 		cout << "WB STAGE: NOTHING TO WRITE BACK" << endl;
 	}
+	// instruction done
 }
 
 
