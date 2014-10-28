@@ -15,7 +15,7 @@ DataPath::DataPath(int text_segment_length){
 
 int DataPath::memory_write(int addr, string data){
 	data_memory.insert(std::pair<int, string>(addr, data));
-
+	return 0;
 }
 
 string DataPath::memory_read(int addr)

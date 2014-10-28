@@ -90,7 +90,6 @@ int main(){
             old_if_id.empty = true;
             old_id_ex.decoded_opcode = EMPTY_LATCH;
             old_ex_mem.decoded_opcode = EMPTY_LATCH;
-            old_mem_wb.decoded_opcode = EMPTY_LATCH;
 
             cout << "STARTING WB_STAGE CYCLE " << cycle << "FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
             //write back
@@ -100,8 +99,6 @@ int main(){
           case 2:
             old_if_id.empty = true;
             old_id_ex.decoded_opcode = EMPTY_LATCH;
-            old_ex_mem.decoded_opcode = EMPTY_LATCH;
-
             cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
             // till memory_stage is written
             memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
@@ -115,7 +112,6 @@ int main(){
           // 3 instructions in pipeline
           case 3:
             old_if_id.empty = true;
-            old_id_ex.decoded_opcode = EMPTY_LATCH;
             
             cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
             // execute 
@@ -134,8 +130,6 @@ int main(){
             cycle++;
 
           case 4:
-            if_id_latch old_if_id;
-            old_if_id.empty = true;
             cout << "STARTING ID_STAGE CYCLE " << cycle << endl;
             // instruction decode
             id_stage(&data_path, &old_if_id, &new_id_ex);
