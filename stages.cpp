@@ -89,7 +89,37 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 	    //forward value that will be used for branch comparison (decoded
 		int rs = if_id->ir.operands[1];
 		id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-	} else if (opcode == "lb"){
+	} else if(opcode == "bge"){
+		id_ex -> op = 4;
+		int last = data_path -> memory.size() - 1;
+		for(int i = 1; i < last; ++i) {
+			if(data_path -> memory.at(i).type == "label"){
+				if(if_id->ir.label == data_path -> memory.at(i).label){
+					id_ex -> new_PC = i;
+					break;
+				}
+			}
+		}
+		int rs = if_id->ir.operands[1];
+		int rt = if_id->ir.operands[2];
+		id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+		id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
+	}else if (opcode == "bne"){
+		id_ex -> op = 5;
+		int last = data_path -> memory.size() - 1;
+		for(int i = 1; i < last; ++i) {
+			if(data_path -> memory.at(i).type == "label"){
+				if (if_id->ir.label == data_path -> memory.at(i).label){
+					id_ex -> new_PC = i;
+					break;
+				}
+			}
+		}
+		int rs = if_id->ir.operands[1];
+		int rt = if_id->ir.operands[2];
+		id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
+		id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
+	}else if (opcode == "lb"){
 		id_ex -> op = 0;
 		id_ex->rd = if_id -> ir.operands[1];
 		int rt = if_id->ir.operands[2];
@@ -142,6 +172,18 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 				cout << "BRANCH TAKEN" << endl;
 				data_path -> pc = id_ex -> new_PC;
 			}
+		} else if (opcode == "bge"){
+			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);
+			if(ex_mem -> alu_output == 0){
+				cout << "BRANCH TAKEN" << endl;
+				data_path -> pc = id_ex -> new_PC;
+			}
+		} else if (opcode == "bne"){
+			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);
+			if (ex_mem -> alu_output == 0){
+				cout << "BRANCH TAKEN" << endl;
+				data_path -> pc = id_ex -> new_PC;
+			}
 		}
 	}else {
 		cout << "EXE STAGE - NOTHING TO EXECUTE FOR OPCODE: " << opcode << endl;
@@ -166,7 +208,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 			return;
 		}
 		// nop if instruction isnt lb *may need to add other instructions here if there are others that use memory*
-		if(opcode != "lb" || "beqz"){
+		if(opcode != "lb" && opcode != "beqz" && opcode != "bge" && opcode != "bne"){
 			cout << "MEM STAGE - MEM_WB BEING SET" << endl;
 	    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
         	mem_wb -> alu_output = ex_mem -> alu_output;
@@ -175,6 +217,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 
 		}
 		else {
+			mem_wb -> rd = SKIP_WRITEBACK; //Implicitly deny the wb_stage
 			cout << "MEM STAGE - MEM_WB IS NOT BEING SET" << endl;
 		}
 
@@ -187,6 +230,11 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 		string opcode = mem_wb -> decoded_opcode;
 		if( opcode == EMPTY_LATCH) {
 			//No operation to be performed
+			return;
+		}
+		if (mem_wb -> rd == SKIP_WRITEBACK || opcode == "syscall") {
+			*count = (*count) - 1;
+			cout << "WB STAGE: SKIP WRITEBACK" << endl;
 			return;
 		}
 		if (opcode == "nop") {

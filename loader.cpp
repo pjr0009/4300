@@ -114,11 +114,11 @@ int Loader::parse_assembly(DataPath* data_path){
 			    translate_rformat_to_binary(data_path, j, operands, i);
 			    j++;
 		    }
-		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz")){
+		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz" || operands[0] == "bne")){
 		    	translate_iformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
-		    else if(operands.size() > 0 && (operands[0] == "b" || operands[0] == "bne")){
+		    else if(operands.size() > 0 && (operands[0] == "b")){
 		    	translate_jformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
@@ -247,6 +247,20 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 
 	else if (opcode == "bge") {
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(00101);
+		// rs
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
+		// rt
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
+		// rd
+		data_path -> memory.at(next_memory_slot_index).label = tokens[3];
+
+		data_path -> memory.at(next_memory_slot_index).type = "i-format";
+
+		
+	}
+
+	else if (opcode == "bne") {
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(01001);
 		// rs
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		// rt

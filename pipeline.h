@@ -1,5 +1,6 @@
 #include "instruction.h"
 #define EMPTY_LATCH "NULL"
+#define SKIP_WRITEBACK -1
 
 struct if_id_latch {
 	Instruction ir;
