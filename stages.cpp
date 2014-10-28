@@ -127,7 +127,7 @@ void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
 		// from that point we execute as if it were an li instruction
 		id_ex -> rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
 
-	} else if (opcode == "li") {
+	} else if (opcode == "li" || opcode == "la") {
 		id_ex -> op = 0;
 		id_ex -> syscall_function = 0; // erase if still there
 		id_ex->rd = if_id -> ir.operands[1];
@@ -163,7 +163,17 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 			if(id_ex -> syscall_function == 10){
 				printf("SYSCALL EXIT CALLED: EXITING...\n");
 				data_path -> user_mode = false;
-			} else{
+			} else if (id_ex -> syscall_function == 8){
+				string input;
+				cout << "Please enter a word" << endl;
+				cin >> input;
+				data_path -> memory_write(data_path -> register_file.registers["$4"], input);
+				cout << "WROTE: " << input << " TO MEMORY OFFSET " << data_path -> register_file.registers["$4"] << endl;
+			} 
+			 else if (id_ex -> syscall_function == 4){
+				cout << "SYSCALL PRINT MESSAGE: " << data_path -> memory_read(data_path -> register_file.registers["$4"]) << endl;
+			} 
+			else{
 				printf("UNKNOWN SYSCALL\n");
 			}
 		} else if (opcode == "beqz"){

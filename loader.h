@@ -16,6 +16,8 @@ class Loader {
 	public:
 		Loader(string name);
 		int parse_assembly(DataPath* data_path);
+		int parse_data(DataPath* data_path);
+
 		int text_segment_length();
 		int data_segment_length();
 
@@ -25,6 +27,8 @@ class Loader {
 		
 		int toBinInt(int val);
 		void loader_debug(DataPath data_path, int index);
+		void memory_debug(DataPath data_path, int index);
+
 
 
 };

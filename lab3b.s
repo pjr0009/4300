@@ -20,13 +20,13 @@
 main:
 	
 ## read the string S:
-	la $4, string_space
+	la $4, 2 #address of write
 	li $5, 1024
 	li $2, 8		# load "read_string" code into $2.
 	syscall
 
-	la $9, string_space	# A = S.
-	la $10, string_space	# we need to move B to the end
+	la $9, 2	# A = S.
+	la $10, 2	# we need to move B to the end
 
 length_loop:			# length of the string
 	lb $11, ($10)		# load the byte at addr B into $11.
@@ -63,14 +63,14 @@ test_loop:
 	
 is_palin:			# print the is_palin_msg, and exit.
 
-	la $4, is_palin_msg
+	la $4, 0
 	li $2, 4
 	syscall
 	b exit
 	nop
 	
 not_palin:
-	la $4, not_palin_msg	## print the not_palin_msg, and exit.
+	la $4, 1	## print the not_palin_msg, and exit.
 	li $2, 4
 	syscall
 	b exit
@@ -82,6 +82,6 @@ exit:				# exit the program
 
 
 	.data
-is_palin_msg: .asciiz "The string is a palindrome.\n"
-not_palin_msg: .asciiz "The string is not a palindrome.\n"
-string_space: .space 1024	# reserve 1024 bytes for the string.
+0: .asciiz "The string is a palindrome.\n"
+1: .asciiz "The string is not a palindrome.\n"
+2: .space 1024	# reserve 1024 bytes for the string.

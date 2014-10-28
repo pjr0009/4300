@@ -32,6 +32,7 @@ int Loader::text_segment_length(){
 			    	}
 			    	else if (token == ".data"){
 			    		in_text_segment = false;
+			    		break;
 			    	}
 			    	if(in_text_segment){
 			    		if (token[0] != '#' && token[0] != '\0' && token[0] != '.'){
@@ -88,7 +89,11 @@ int Loader::parse_assembly(DataPath* data_path){
 		    
 			vector<string> operands; //dynamic number of operands
 		    int i = 0;
-			stringstream ssin(line.erase(line.find_last_not_of(" \n\r\t") +1));
+		    if(line == ".data"){
+		    	source_file.close();
+		    	return 1;
+		    }
+			stringstream ssin(line.erase(line.find_last_not_of(" \n\r\t") + 1));
 		    while (ssin.good()){
 		    	string temp;
 		        ssin >> temp;
@@ -161,6 +166,45 @@ int Loader::parse_assembly(DataPath* data_path){
 }
 //ADDI, B, BEQZ, BGE, BNE, LA, LB, LI, SUBI, and SYSCALL. xxx
 
+int Loader::parse_data(DataPath* data_path){
+	string line;
+	bool in_data = false;
+	source_file.open(file_name);
+	if (source_file.is_open()){
+		int j = 0;
+		while ( getline (source_file, line) ){
+		    string temp[10];
+		    string string_val;
+		    int i = 0;
+		    if(line == ".data"){
+		    	in_data = true;
+		    	continue;
+		    }
+		    if(!in_data){
+		    	continue;
+		    }
+		    if(line == "\0"){
+		    	source_file.close();
+		    	return 0;
+		    }
+			stringstream ssin(line.erase(line.find_last_not_of(" \n\r\t") + 1));
+		    while (ssin.good()){
+		    	if(i > 1){
+		    		ssin >> string_val;
+		    	} else {
+			        ssin >> temp[i];
+		    	}
+		        i++;
+		    }
+		    data_path -> memory_write(atoi(temp[0].c_str()),string_val);
+		    memory_debug(*data_path, j);
+		    j++;
+		}
+		source_file.close();
+	}
+	return 0;
+}
+//ADDI, B, BEQZ, BGE, BNE, LA, LB, LI, SUBI, and SYSCALL. xxx
 
 // writes the binary representation of an instruction to our memory unit
 void Loader::translate_rformat_to_binary(DataPath *data_path, int next_memory_slot_index, vector<string> tokens, int length){
@@ -218,7 +262,7 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 	string opcode = tokens[0];
 	
 	//ADDI, SUBI instructions
-	if(tokens[0] == "li"){
+	if(tokens[0] == "li" || tokens[0] == "la"){
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(00010);
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[2].c_str()));
@@ -298,4 +342,7 @@ void Loader::loader_debug(DataPath data_path, int index){
 	}
     printf("\n");
 
+}
+void Loader::memory_debug(DataPath data_path, int index){
+	cout << "wrote memory value: " << data_path.memory_read(index) << " with offset of: " << index << endl;
 }

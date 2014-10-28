@@ -14,6 +14,7 @@ DataPath::DataPath(int text_segment_length){
 };
 
 int DataPath::memory_write(int addr, string data){
+	cout << "WRITING " << data << "TO ADDR" << addr << endl;
 	data_memory.insert(std::pair<int, string>(addr, data));
 	return 0;
 }

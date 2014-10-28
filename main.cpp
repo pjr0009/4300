@@ -17,6 +17,7 @@ int main(){
 
 	int count = loader.text_segment_length();
     int data_segment_length = loader.data_segment_length();
+    cout << count << endl;
 
 
 	DataPath data_path(count);
@@ -26,6 +27,7 @@ int main(){
 	cout << "/******** ***************************** ********/" << endl;
 
 	loader.parse_assembly(&data_path);
+    loader.parse_data(&data_path);
 
     if_id_latch old_if_id;
     old_if_id.empty = true;
