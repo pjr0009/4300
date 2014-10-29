@@ -29,7 +29,7 @@ struct ex_mem_latch {
 struct mem_wb_latch {
 	string decoded_opcode;
 	int alu_output;
-	int mdr;
+	unsigned char mdr;
 	int operand_b;
 	int rd;
 };

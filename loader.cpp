@@ -102,7 +102,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			        if (i == 1 && (operands[0] != "b")){
 			    	  temp.pop_back(); // remove comma separator
 			        }
-			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "bge")){
+			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "bge" || operands[0] == "bne")){
 			    	  temp.pop_back(); // remove second comma separator
 			        }
 			        operands.push_back(temp);
@@ -170,11 +170,11 @@ int Loader::parse_data(DataPath* data_path){
 	string line;
 	bool in_data = false;
 	source_file.open(file_name);
+	cout << endl << "********* WRITING DATA *********" << endl << endl;
 	if (source_file.is_open()){
 		int j = 0;
 		while ( getline (source_file, line) ){
 		    string temp[10];
-		    string string_val;
 		    int i = 0;
 		    if(line == ".data"){
 		    	in_data = true;
@@ -188,12 +188,40 @@ int Loader::parse_data(DataPath* data_path){
 		    	return 0;
 		    }
 			stringstream ssin(line.erase(line.find_last_not_of(" \n\r\t") + 1));
+		    string temp_string;
+		    string string_val;
+
 		    while (ssin.good()){
 		    	if(i > 1){
-		    		ssin >> string_val;
+		    		ssin >> temp_string;
+		    		
 		    	} else {
 			        ssin >> temp[i];
 		    	}
+		    	bool escaped = false;
+		    	string temp = "";
+		    	for (char c : temp_string) {
+		    		if (escaped) {
+		    			switch (c) {
+		    				case 'n':
+		    					continue;
+		    				case '0':
+		    					continue;
+		    				case 't':
+		    					temp += '\t';
+		    					break;
+		    				default:
+		    					break;
+		    			}
+		    		} else if (c == '"') {
+		    			continue;
+		    		} else if (c == '\\') {
+		    			escaped = true;
+		    		} else {
+		    			temp += c;
+		    		}
+		    	}
+		    	string_val += " " + temp;
 		        i++;
 		    }
 		    data_path -> memory_write(atoi(temp[0].c_str()),string_val);
@@ -202,7 +230,10 @@ int Loader::parse_data(DataPath* data_path){
 		}
 		source_file.close();
 	}
+	cout << endl << "******************************" << endl << endl;
+
 	return 0;
+
 }
 //ADDI, B, BEQZ, BGE, BNE, LA, LB, LI, SUBI, and SYSCALL. xxx
 
@@ -278,7 +309,7 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 		//remove parentheses from string
 		tokens[2].erase(0, 1); 
 		tokens[2].pop_back();
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);			
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);			
 	}
 	else if(tokens[0] == "la"){
 		// // iterate through memory and replace the offset of label in la
@@ -313,7 +344,9 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 		// rs
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		// rt
+		cout << tokens[2] << endl;
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
+
 		// rd
 		data_path -> memory.at(next_memory_slot_index).label = tokens[3];
 
@@ -349,5 +382,5 @@ void Loader::loader_debug(DataPath data_path, int index){
 
 }
 void Loader::memory_debug(DataPath data_path, int index){
-	cout << "wrote memory value: " << data_path.memory_read(index) << " with offset of: " << index << endl;
+	// cout << "wrote memory value: " << data_path.memory_read(index) << " with offset of: " << index << endl;
 }

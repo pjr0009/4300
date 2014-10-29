@@ -53,31 +53,50 @@ int main(){
 
         //data_path.memory_write(12, "HELLO WORLD");
         //cout << data_path.memory_read(12) << endl;
-
-        cout << "STARTING IF_STAGE CYCLE " << cycle << endl;
     	// instruction fetch
     	if_stage(&data_path, &new_if_id);
 
-        cout << "STARTING ID_STAGE CYCLE " << cycle << endl;
     	// instruction decode
     	id_stage(&data_path, &old_if_id, &new_id_ex);
         old_if_id = new_if_id;
 
-        cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
     	// execute 
     	execute_stage(&data_path, &old_id_ex, &new_ex_mem);
         old_id_ex = new_id_ex;
 
-        cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
         // till memory_stage is written
         memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
         old_ex_mem = new_ex_mem;
 
-        cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
     	//write back
     	wb_stage(&data_path, &old_mem_wb, &in_pipeline);
 
         old_mem_wb = new_mem_wb;
+
+        cout << "***************** LATCHES AFTER CYCLE " << cycle << "************************" << endl;
+        cout << "IF_ID LATCH: " << endl;
+        cout << "ir opcode: " << data_path.decoder.opcodeDecode[old_if_id.ir.operands[0]] << endl;
+        cout << "operand 1: " <<old_if_id.ir.operands[1] << endl;
+        cout << "operand 2: " << old_if_id.ir.operands[2] << endl;
+
+
+        cout << endl;
+        cout << "ID_EX LATCH: " << endl;
+        cout << "decoded_opcode: " << old_id_ex.decoded_opcode << endl;
+        cout << "rs: " << old_id_ex.rs << endl;
+        cout << "rt: " << old_id_ex.rt << endl;
+        cout << "rd: " << old_id_ex.rd << endl;
+        cout << "op: " << old_id_ex.op << endl;
+        cout << "syscall_function: " << old_id_ex.syscall_function << endl;
+        cout << "new_PC: " << old_id_ex.new_PC << endl;
+        cout << endl;
+        cout << "EX_MEM LATCH: " << endl;
+        cout << "rd: " << old_ex_mem.rd << endl;
+        cout << "rt: " << old_ex_mem.rt << endl;
+
+        cout << "************************************************************************" << endl;
+
+
         cycle++;
         cout << endl;
     }

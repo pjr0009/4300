@@ -20,18 +20,29 @@
 main:
 	
 ## read the string S:
-	la $4, 2 #address of write
+	#address of write
+	la $4, 200
 	li $5, 1024
 	li $2, 8		# load "read_string" code into $2.
+	nop  #stall so that write back stage is executed before calling syscall
+	nop
+	nop
 	syscall
-
-	la $9, 2	# A = S.
-	la $10, 2	# we need to move B to the end
+	la $9, 200	# A = S.
+	la $10, 200	# we need to move B to the end
+	nop
+	nop
+	nop
 
 length_loop:			# length of the string
 	lb $11, ($10)		# load the byte at addr B into $11.
 	nop
+	nop  
+	nop               # stall beq three cycles so that lb can load the byte into $11
 	beqz $11, end_length_loop # if $11 == 0, branch out of loop.
+	nop
+	nop
+	nop
 	nop
 	
 	addi $10, $10, 1	# otherwise, increment B,
@@ -39,17 +50,18 @@ length_loop:			# length of the string
 	nop
 	
 end_length_loop:
-	subi $10, $10, 2	# subtract 2 to move B back past
-
-# the '\0' and '\n'.
+	subi $10, $10, 2	# subtract 2 to move B back past # the '\0' 
 
 test_loop:
 	bge $9, $10, is_palin	# if A >= B, it's a palindrome.
 	nop
 	
 	lb $11, ($9)		# load the byte at addr A into $11,
-	nop
 	lb $12, ($10)		# load the byte at addr B into $12.
+	nop
+	nop
+	nop
+	nop
 	nop
 	bne $11, $12, not_palin # if $11 != $12, not a palindrome.
 	nop
@@ -65,23 +77,32 @@ is_palin:			# print the is_palin_msg, and exit.
 
 	la $4, 0
 	li $2, 4
+	nop  #stall so that write back stage is executed before calling syscall
+	nop
+	nop
 	syscall
 	b exit
 	nop
 	
 not_palin:
-	la $4, 1	## print the not_palin_msg, and exit.
+	la $4, 100	## print the not_palin_msg, and exit.
 	li $2, 4
+	nop  #stall so that write back stage is executed before calling syscall
+	nop
+	nop
 	syscall
 	b exit
 	nop
 	
 exit:				# exit the program
 	li $2, 10		# load "exit" code into $2.
+	nop  #stall so that write back stage is executed before calling syscall
+	nop
+	nop
 	syscall			# make the system call.
 
 
 .data
-	0: .asciiz "The string is a palindrome.\n"
-	1: .asciiz "The string is not a palindrome.\n"
-	2: .space 1024	# reserve 1024 bytes for the string.
+	0:  .asciiz "The string is a palindrome.\n"
+	100:  .asciiz "The string is not a palindrome.\n"
+ 	200:  .space 1024	# reserve 1024 bytes for the string.

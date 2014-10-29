@@ -15,21 +15,17 @@ DataPath::DataPath(int text_segment_length){
 
 int DataPath::memory_write(int addr, string data){
 	cout << "WRITING " << data << "TO ADDR" << addr << endl;
-	data_memory.insert(std::pair<int, string>(addr, data));
+	// +1 to these calculations to include the null terminator at the end of data
+	if (data_segment.size() < addr + data.size() + 1) {
+		data_segment.resize(addr + data.size() + 1);
+	}
+	memcpy(data_segment.data() + addr, data.c_str(), data.size() + 1);
 	return 0;
 }
 
-string DataPath::memory_read(int addr)
+unsigned char DataPath::memory_read(int addr)
 {
-	string out;
-	try {
-		out = data_memory.at(addr);
-	}
-	catch (int e){
-		cout << "INVALID MEMORY ACCESS" << endl;
-	}
-
-	return out;
+	return data_segment.at(addr);
 }
 
 int DataPath::alu(int a, int b, int op){

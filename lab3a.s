@@ -6,6 +6,8 @@ main:
     li $1, 0
     nop
     nop
+    nop
+    nop
 
 loop:
 	subi $2, $2, 1
@@ -15,6 +17,10 @@ loop:
 	bge  $2, $1, loop
 	nop
 	nop
+	nop
 	li $2, 10
+	nop
+	nop
+	nop
 	syscall
 	
