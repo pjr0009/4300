@@ -9,12 +9,6 @@ main:
 	li $6, 1
     nop
     nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
 loop:	
 	add $1, $2, $3
 	add $2, $2, $4
