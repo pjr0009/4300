@@ -1,4 +1,4 @@
-#include "register_file.h"
+#include "../include/register_file.h"
 
 RegisterFile::RegisterFile(){
     registers["zero"]  = 0;

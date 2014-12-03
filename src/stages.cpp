@@ -1,6 +1,6 @@
-#include "stages.h"
+#include "../include/stages.h"
 
-void if_stage(DataPath *data_path, if_id_latch *if_id){
+void id1_stage(DataPath *data_path){
 	Instruction current_instruction = data_path -> memory.at(data_path -> pc);
 	// label?
 	while(data_path -> pc < data_path -> memory.size() && data_path -> memory.at(data_path -> pc).type == "label"){
@@ -10,27 +10,24 @@ void if_stage(DataPath *data_path, if_id_latch *if_id){
 	// put instruction at program counter into instruction register
 	data_path -> register_file.instruction_register = current_instruction;
 	// add current instruction the the if_id_latch
-	if_id -> ir = current_instruction;
-	if_id -> empty = false;
-
+	// if_id -> ir = current_instruction;
 	// increment pc
-	if_debug(*data_path, if_id);
 	data_path -> pc = (data_path -> pc) + 1;
 
 }
 
-void id_stage(DataPath *data_path, if_id_latch *if_id, id_ex_latch *id_ex){
-	if(if_id->empty) {
-		id_ex->decoded_opcode = EMPTY_LATCH;
-		//No operation to be performed
-		return;
-	}
-	else if (if_id->ir.type == "nop") {
-		id_ex->decoded_opcode = "nop";
-		id_ex->rd =0;
-		cout << "ID STAGE: NOP ENCOUNTERED" << endl;
-		return;
-	}
+void id_stage(DataPath *data_path){
+	// if(if_id->empty) {
+	// 	id_ex->decoded_opcode = EMPTY_LATCH;
+	// 	//No operation to be performed
+	// 	return;
+	// }
+	// else if (if_id->ir.type == "nop") {
+	// 	id_ex->decoded_opcode = "nop";
+	// 	id_ex->rd =0;
+	// 	cout << "ID STAGE: NOP ENCOUNTERED" << endl;
+	// 	return;
+	// }
 
 	string opcode = data_path -> decoder.opcodeDecode[if_id -> ir.operands[0]];
 	id_ex -> decoded_opcode = opcode;
@@ -163,7 +160,7 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 	if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
 			cout << "EXECUTING: " << opcode << endl;
-			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);	
+			ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);	
 		}
 		else if (opcode == "syscall"){
 			if(id_ex -> syscall_function == 10){
@@ -195,20 +192,20 @@ void execute_stage(DataPath *data_path, id_ex_latch *id_ex, ex_mem_latch *ex_mem
 				printf("UNKNOWN SYSCALL\n");
 			}
 		} else if (opcode == "beqz"){
-			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, 0, id_ex -> op);
-			if(ex_mem -> alu_output == 0){
+			ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, 0, id_ex -> op);
+			if(ex_mem -> fu_output == 0){
 				cout << "BRANCH TAKEN, NEW PC  " << id_ex -> new_PC << endl;
 				data_path -> pc = id_ex -> new_PC;
 			}
 		} else if (opcode == "bge"){
-			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);
-			if(ex_mem -> alu_output == 0){
+			ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);
+			if(ex_mem -> fu_output == 0){
 				cout << "BRANCH TAKEN" << endl;
 				data_path -> pc = id_ex -> new_PC;
 			}
 		} else if (opcode == "bne"){
-			ex_mem -> alu_output = data_path -> alu(id_ex -> rs, id_ex -> rt, id_ex -> op);
-			if (ex_mem -> alu_output == 0){
+			ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);
+			if (ex_mem -> fu_output == 0){
 				cout << "BRANCH TAKEN" << endl;
 				data_path -> pc = id_ex -> new_PC;
 			}
@@ -248,7 +245,7 @@ void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_w
 		if(opcode != "lb" && opcode != "beqz" && opcode != "bge" && opcode != "bne"){
 			cout << "MEM STAGE - MEM_WB BEING SET" << endl;
 	    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
-        	mem_wb -> alu_output = ex_mem -> alu_output;
+        	mem_wb -> fu_output = ex_mem -> fu_output;
        		mem_wb -> operand_b = ex_mem -> rt;
         	mem_wb -> rd = ex_mem -> rd;
 
@@ -291,7 +288,7 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 			// fwd syscall value
 		}
 		if(opcode == "addi" || opcode == "subi" || opcode == "add"){
-			data_path -> register_file.registers[dest_reg] = mem_wb -> alu_output;
+			data_path -> register_file.registers[dest_reg] = mem_wb -> fu_output;
 		}
 		if(opcode == "lb"){
 			cout << "WRITING " << mem_wb -> mdr << " TO REGISTER" << endl;

@@ -21,14 +21,14 @@ struct id_ex_latch {
 
 struct ex_mem_latch {
 	string decoded_opcode;
-	int alu_output;
+	int fu_output;
 	int rt;
 	int rd;
 };
 
 struct mem_wb_latch {
 	string decoded_opcode;
-	int alu_output;
+	int fu_output;
 	unsigned char mdr;
 	int operand_b;
 	int rd;

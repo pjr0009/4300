@@ -1,4 +1,4 @@
-#include "data_path.h"
+#include "../include/data_path.h"
 
 
 DataPath::DataPath(int text_segment_length){
@@ -28,7 +28,7 @@ unsigned char DataPath::memory_read(int addr)
 	return data_segment.at(addr);
 }
 
-int DataPath::alu(int a, int b, int op){
+int DataPath::functional_unit(int a, int b, int op){
 	if(op == 1){
 		return a+b;
 	}

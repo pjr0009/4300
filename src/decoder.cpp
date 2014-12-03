@@ -1,4 +1,4 @@
-#include "decoder.h"
+#include "../include/decoder.h"
 
 
 Decoder::Decoder(){
