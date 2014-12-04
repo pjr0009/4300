@@ -1,9 +1,12 @@
+#ifndef _SCOREBOARD_H
+#define _SCOREBOARD_H
+
 #include <vector>
 #include "decoder.h"
 
 typedef short clock_cycle;
 
-enum functional_unit {NONE, INTEGER, FLOAT};
+enum functional_unit {INTEGER, FLOAT, NONE};
 
 
 struct functional_unit_status_entry {
@@ -32,13 +35,18 @@ class Scoreboard {
 public:
 	/* index of where the instruction lives in the code segment.*/
 	int instruction_id; 
+	Scoreboard(int instruction_count);
 
 	/* instruction status - one entry per instruction    */
 	/* tells the clock cycle at which each stage happens */
-	vector<instruction_status_entry> instruction_status; 
+	vector<instruction_status_entry> instruction_status;
+	vector<functional_unit_status_entry> fu_status; 
+
 
 	/* functional unit status - one entry per funcitonal unit */
 	/* tracks the status of the each functional unit */
 
 
 };
+
+#endif

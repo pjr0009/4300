@@ -2,8 +2,9 @@
 #include "data_path.h"
 #include "pipeline.h"
 #include <stdio.h>
+#include "scoreboard.h"
 
-void id1_stage(DataPath *data_path);
+void id1_stage(DataPath *data_path, Scoreboard *scobo);
 void id2_stage(DataPath *data_path);
 void execute_stage(DataPath *data_path);
 void wb_stage(DataPath *data_path, int* count);
