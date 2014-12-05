@@ -42,16 +42,32 @@ void Scoreboard::debug(DataPath *data_path){
 	printElement("\nINSTRUCTION STATUS", 40);
 	cout << endl;
 	cout << endl;
-	printElement("ID1", 10);
-	printElement("ID2", 10);
-	printElement("EX", 10);
-	printElement("WB", 10);
+	printElement("ISSUE", 10);
+	printElement("DECODE", 10);
+	printElement("EXEC", 10);
+	printElement("WRITE", 10);
 	cout << endl;
 
 		
 
-	for(int i = 0; i < data_path -> fetch_buffer.size(); i++){
-			instruction_status_entry entry = data_path -> fetch_buffer.at(i).status;
+			instruction_status_entry entry = data_path -> integer_register_file.ir.status;
+			if(entry.ID1 != 0){
+				printElement(entry.ID1, 10);
+			}
+
+			if(entry.ID2 != 0){
+				printElement(entry.ID2, 10);
+			}			
+
+			if(entry.EX != 0){
+				printElement(entry.EX, 10);
+			}			
+		    if(entry.WB != 0){
+				printElement(entry.WB, 10);
+			}
+
+			cout << endl;
+		    entry = data_path -> float_register_file.ir.status;
 			if(entry.ID1 != 0){
 				printElement(entry.ID1, 10);
 			}
@@ -68,7 +84,6 @@ void Scoreboard::debug(DataPath *data_path){
 			}
 
 			cout << endl;
-	}
 
 	// functional unit status
 	cout << endl;

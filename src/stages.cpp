@@ -27,7 +27,9 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 
 
 	if(opcode == "addi"|| opcode == "subi" || opcode == "add"){
-		if(scobo -> fu_status[INTEGER].busy == 1){
+		if(scobo -> fu_status[INTEGER].busy == true){
+			data_path -> fetch_buffer.pop_back();
+			return;
 			// fu busy; stall aka do nothing.
 		}
 		
@@ -39,16 +41,18 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 			scobo -> fu_status[INTEGER].fj = data_path -> decoder.registerDecode[current_instruction.operands[2]];
 
 			data_path -> integer_register_file.ir = current_instruction;
+			data_path -> integer_register_file.ir.status.ID1 = *cycle;
+
 
 			// are the operand registers ready (yes for rk cause it's immediate)
 			scobo -> fu_status[INTEGER].rj = READY;
 			scobo -> fu_status[INTEGER].rk = DONE;
 			// 3rd value is immediate value			
-			data_path -> fetch_buffer.back().status.ID1 = *cycle;
 			advance_pc = true;
 		}
 
 	}
+
 	
 	if(advance_pc){
 		data_path -> pc = (data_path -> pc) + 1;
@@ -66,54 +70,41 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 
 // if pipelined is true. we pipeline the decode ex stage.
 void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle, id_ex_latch *id_ex){
-	// if(if_id->empty) {
-	// 	id_ex->decoded_opcode = EMPTY_LATCH;
-	// 	//No operation to be performed
-	// 	return;
-	// }
-	// else if (if_id->ir.type == "nop") {
-	// 	id_ex->decoded_opcode = "nop";
-	// 	id_ex->rd =0;
-	// 	cout << "ID STAGE: NOP ENCOUNTERED" << endl;
-	// 	return;
-	// }
-
-
-	Instruction integer_instruction = data_path -> integer_register_file.ir;
-	Instruction float_instruction = data_path -> float_register_file.ir;
-
-	if(integer_instruction.operands[0]){
-		cout << endl << "ID2 STAGE FOR INTEGER INSTRUCTION" << endl;
-		id_ex -> decoded_opcode = (data_path -> decoder.opcodeDecode[integer_instruction.operands[0]].c_str());
-
-	    // this is vastly simplified, we don't need to have all this conditional logic
-	    // depending on the instruction anymore. we just check if there registers that arent ready.
-	    // if they aren't ready, we can check if the fu they're waiting on is complete. if Qj / Qk
-	    // == NONE then we'll just assume its okay to read, because it isn't waiting on a
-
-		id_ex->ri = integer_instruction.operands[1];
-
- 		if(scobo -> fu_status[INTEGER].rj == READY){
-
-	     	id_ex -> rj = (data_path -> integer_register_file.registers[data_path -> decoder.registerDecode[integer_instruction.operands[2]]]);
-	     	// update scoreboard
-			scobo -> fu_status[INTEGER].rj = DONE;
-			// other value should be immediate so we should be good to go to exec stage.
-		}
-		if(scobo -> fu_status[INTEGER].rk == READY){
-
-	     	id_ex -> rk = (data_path -> integer_register_file.registers[data_path -> decoder.registerDecode[integer_instruction.operands[3]]]);
-	     	// update scoreboard
-			scobo -> fu_status[INTEGER].rk = DONE;
-			// other value should be immediate so we should be good to go to exec stage.
-		}	
-
-		if(scobo -> fu_status[INTEGER].rj == NOTREADY || scobo -> fu_status[INTEGER].rk == NOTREADY ){
-			id_ex -> nop = true; //one operand isn't ready we need to wait
-		}
+	if(data_path -> integer_register_file.ir.status.ID1 == *cycle){
+		cout << "HERHE" << endl;
+		return; // pipeline
 	}
-			
-	data_path -> fetch_buffer.back().status.ID2 = *cycle;
+
+	cout << endl << "ID2 STAGE FOR INTEGER INSTRUCTION" << endl;
+	// id_ex -> decoded_opcode = (data_path -> decoder.opcodeDecode[integer_instruction.operands[0]].c_str());
+
+    // this is vastly simplified, we don't need to have all this conditional logic
+    // depending on the instruction anymore. we just check if there registers that arent ready.
+    // if they aren't ready, we can check if the fu they're waiting on is complete. if Qj / Qk
+    // == NONE then we'll just assume its okay to read, because it isn't waiting on a
+
+	// id_ex->ri = integer_instruction.operands[1];
+
+		if(scobo -> fu_status[INTEGER].rj == READY){
+
+     	id_ex -> rj = (data_path -> integer_register_file.registers[scobo -> fu_status[INTEGER].fj]);
+     	// update scoreboard
+		scobo -> fu_status[INTEGER].rj = DONE;
+		// other value should be immediate so we should be good to go to exec stage.
+	}
+	if(scobo -> fu_status[INTEGER].rk == READY){
+
+     	id_ex -> rk = (data_path -> integer_register_file.registers[scobo -> fu_status[INTEGER].fk]);
+     	// update scoreboard
+		scobo -> fu_status[INTEGER].rk = DONE;
+		// other value should be immediate so we should be good to go to exec stage.
+	}	
+
+	if(scobo -> fu_status[INTEGER].rj == NOTREADY || scobo -> fu_status[INTEGER].rk == NOTREADY ){
+		id_ex -> nop = true; //one operand isn't ready we need to wait
+	}
+	cout << "UPDATING CYCLES TO " << *cycle << endl;
+	data_path -> integer_register_file.ir.status.ID2 = *cycle;
 	
 
 		
