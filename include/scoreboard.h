@@ -3,8 +3,11 @@
 
 #include <vector>
 #include "decoder.h"
+#include "data_path.h"
+#include "instruction.h"
 
-typedef short clock_cycle;
+#define NUM_OF_FU 2
+typedef int clock_cycle;
 
 enum functional_unit {INTEGER, FLOAT, NONE};
 
@@ -25,7 +28,8 @@ struct functional_unit_status_entry {
 };
 
 struct instruction_status_entry {
-	clock_cycle ID; 
+	Instruction instruction;
+	clock_cycle ID1; 
 	clock_cycle ID2;
 	clock_cycle EX;
 	clock_cycle WB;
@@ -35,8 +39,8 @@ class Scoreboard {
 public:
 	/* index of where the instruction lives in the code segment.*/
 	int instruction_id; 
-	Scoreboard(int instruction_count);
-
+	Scoreboard(int instruction_count, DataPath data_path);
+	void debug();
 	/* instruction status - one entry per instruction    */
 	/* tells the clock cycle at which each stage happens */
 	vector<instruction_status_entry> instruction_status;

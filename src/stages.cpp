@@ -1,30 +1,52 @@
 #include "../include/stages.h"
 
-void id1_stage(DataPath *data_path, Scoreboard *scobo){
-	Instruction current_instruction = data_path -> memory.at(data_path -> pc);
-	// label?
+void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
+	Instruction fetched_instruction = data_path -> memory.at(data_path -> pc);
+	Instruction current_instruction;
+
+
+    // label? skip ot the next one.
 	while(data_path -> pc < data_path -> memory.size() && data_path -> memory.at(data_path -> pc).type == "label"){
 		data_path -> pc += 1;
-		current_instruction = data_path -> memory.at(data_path -> pc);
+		fetched_instruction = (data_path -> memory.at(data_path -> pc));
 	}
-	// put instruction at program counter into instruction register
-	// data_path -> register_file.instruction_register = current_instruction;
-	// add current instruction the the if_id_latch
-	// if_id -> ir = current_instruction;
+	
+	data_path -> fetch_buffer.push_back(fetched_instruction);
+
+
+	// because the most recent instruction read in might not be the next one up for issuing.
+	// while it relatively doesn't take a lot of time read in an instruction in c++ we wouldn't want to keep reading in
+	// the instruction each time at the hardware level. so we store in a buffer.
+	current_instruction = data_path -> fetch_buffer.back();
+
 	// increment pc
-	data_path -> pc = (data_path -> pc) + 1;
 
 	// decode the opcode to see if its functional unit is avail
 	string opcode = data_path -> decoder.opcodeDecode[current_instruction.operands[0]];
-	if("addi" || "subi"){
+	
+
+
+	if(opcode == "addi"|| opcode == "subi" || opcode == "add"){
 		if(scobo -> fu_status[INTEGER].busy == 1){
-			// fu busy
+			// fu busy; stall aka do nothing.
 		}
+		
 		else {
-			// fu is free issue instruction
+			// integer fu is free, set up scoreboard values. and issue instruction
+			scobo -> fu_status[INTEGER].busy = true;
+			scobo -> fu_status[INTEGER].fi = data_path -> decoder.opcodeDecode[current_instruction.operands[0]];
+			scobo -> fu_status[INTEGER].fj = data_path -> decoder.opcodeDecode[current_instruction.operands[1]];
+			scobo -> fu_status[INTEGER].fk = data_path -> decoder.opcodeDecode[current_instruction.operands[2]];
+			scobo -> instruction_status[data_path -> pc].ID1 = *cycle; 
+			scobo -> instruction_status[data_path -> pc].instruction = fetched_instruction; 
+
+			scobo -> debug();
 		}
+
 	}
 
+
+	data_path -> pc = (data_path -> pc) + 1;
 
 }
 

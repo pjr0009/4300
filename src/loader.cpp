@@ -4,6 +4,8 @@
 #include <limits>
 #include <string>
 #include <cstdlib>
+#include <iostream>
+#include <iomanip>
 
 Loader::Loader(string name){
 	file_name = name;
@@ -81,6 +83,7 @@ int Loader::data_segment_length(){
 
 // open file, read lines, parse into instruction, store in memory unit
 int Loader::parse_assembly(DataPath* data_path){
+	debug_bootstrap();
 	string line;
 	source_file.open(file_name);
 	if (source_file.is_open()){
@@ -358,23 +361,54 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 	loader_debug(*data_path, next_memory_slot_index);
 }
 
+template<typename T> void printElement(T t, const int& width)
+{
+   	const char separator    = ' ';
+    cout << left << setw(width) << setfill(separator) << t;
+}
+void Loader::debug_bootstrap(){
+	printElement("TYPE", 10);
+	printElement("LABEL", 10);
+	printElement("OFFSET", 10);
+	printElement("OPCODE", 10);
+	printElement("OP I", 10);
+	printElement("OP J", 10);
+	printElement("OP K", 10);
+	cout << endl;
+	cout << endl;
+}
+
 void Loader::loader_debug(DataPath data_path, int index){
 	string type = data_path.memory.at(index).type;
 	vector<int> operands = data_path.memory.at(index).operands;
-	printf("\n Instruction type: %s, ", type.c_str());
+
+	printElement(type.c_str(), 10);
 	// the i'th instruction's operands
 	if(operands.size() > 0){
 	    if(type == "label"){
-	    	printf("name: %s, offset: %d ", data_path.memory.at(index).label.c_str(), operands[0]);
+	    	//label
+	    	printElement(data_path.memory.at(index).label.c_str(), 10);
+	    	//offset 
+	    	printElement(operands[0], 10);
+	    	cout << endl;
+
 	    } else {
 	    	if(data_path.memory.at(index).label.size() > 0){
-	    		printf("label: %s, ", data_path.memory.at(index).label.c_str());
+	    		printElement(data_path.memory.at(index).label.c_str(), 10);
+	    	} else {
+	    		// empty label
+	    		printElement("", 10);
+
 	    	}
-			printf("opcode: %s ", data_path.decoder.opcodeDecode[operands[0]].c_str());
+	    	// offset
+	    	printElement("", 10);
+	    	//opcode
+	    	printElement(data_path.decoder.opcodeDecode[operands[0]].c_str(), 10);
 			int last = operands.size() - 1;
 		    for(int i = 0; i < last; ++i) {
-		    	printf("operand %d: %d ", i + 1, operands[i + 1]);
+		    	printElement(operands[i + 1], 10);
 		    }
+		    cout << endl;
 	    }
 
 	}

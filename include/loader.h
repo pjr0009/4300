@@ -12,6 +12,8 @@ using namespace std;
 class Loader {
 	string file_name;
 	ifstream source_file;
+	
+	void debug_bootstrap();
 	void loader_debug(string instruction, string formatSlot, string token, int binary);
 	public:
 		Loader(string name);

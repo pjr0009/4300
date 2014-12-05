@@ -17,6 +17,8 @@ class DataPath {
 		int pc;
 		Decoder decoder;
 		vector<Instruction> memory;
+		vector<Instruction> fetch_buffer;
+
 		RegisterFile register_file;		
 		// map<int, string> data_memory;
 		vector<unsigned char> data_segment;

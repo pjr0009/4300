@@ -31,7 +31,7 @@ int main(){
 	loader.parse_assembly(&data_path);
     loader.parse_data(&data_path);
 
-    Scoreboard scobo(count);
+    Scoreboard scobo(count, data_path);
 
    
     int cycle = 1;
@@ -46,7 +46,7 @@ int main(){
         //cout << data_path.memory_read(12) << endl;
     	
         // instruction fetch / issue to reservation station (program order)
-    	id1_stage(&data_path, &scobo);
+    	id1_stage(&data_path, &scobo, &cycle);
 
     	// instruction decode reservation station (out of order possible)
     	// id2_stage(&data_path);
