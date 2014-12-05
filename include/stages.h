@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include "scoreboard.h"
 
+#define TIMEOUT_LIMIT 20
+
 void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle);
-void id2_stage(DataPath *data_path);
+void id2_stage(DataPath *data_path, Scoreboard *scobo, int *cycle, id_ex_latch *id_ex);
 void execute_stage(DataPath *data_path);
 void wb_stage(DataPath *data_path, int* count);
 

@@ -7,10 +7,12 @@ struct if_id_latch {
 	bool empty;
 };
 
+// still need this
 struct id_ex_latch {
-	int rs;
-	int rd;
-	int rt;
+	bool nop; // stall or nah
+	int ri;
+	int rj;
+	int rk;
 	int op;
 	int syscall_function;
 	string decoded_opcode;

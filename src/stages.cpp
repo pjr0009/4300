@@ -3,7 +3,7 @@
 void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 	Instruction fetched_instruction = data_path -> memory.at(data_path -> pc);
 	Instruction current_instruction;
-
+	bool advance_pc = false; // set to true if we issue an instruction, otherwise stall on other funits
 
     // label? skip ot the next one.
 	while(data_path -> pc < data_path -> memory.size() && data_path -> memory.at(data_path -> pc).type == "label"){
@@ -34,23 +34,38 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		else {
 			// integer fu is free, set up scoreboard values. and issue instruction
 			scobo -> fu_status[INTEGER].busy = true;
-			scobo -> fu_status[INTEGER].fi = data_path -> decoder.opcodeDecode[current_instruction.operands[0]];
-			scobo -> fu_status[INTEGER].fj = data_path -> decoder.opcodeDecode[current_instruction.operands[1]];
-			scobo -> fu_status[INTEGER].fk = data_path -> decoder.opcodeDecode[current_instruction.operands[2]];
-			scobo -> instruction_status[data_path -> pc].ID1 = *cycle; 
-			scobo -> instruction_status[data_path -> pc].instruction = fetched_instruction; 
+			scobo -> fu_status[INTEGER].op = data_path -> decoder.opcodeDecode[current_instruction.operands[0]];
+			scobo -> fu_status[INTEGER].fi = data_path -> decoder.registerDecode[current_instruction.operands[1]];
+			scobo -> fu_status[INTEGER].fj = data_path -> decoder.registerDecode[current_instruction.operands[2]];
 
-			scobo -> debug();
+			data_path -> integer_register_file.ir = current_instruction;
+
+			// are the operand registers ready (yes for rk cause it's immediate)
+			scobo -> fu_status[INTEGER].rj = READY;
+			scobo -> fu_status[INTEGER].rk = DONE;
+			// 3rd value is immediate value			
+			data_path -> fetch_buffer.back().status.ID1 = *cycle;
+			advance_pc = true;
 		}
 
 	}
-
-
-	data_path -> pc = (data_path -> pc) + 1;
+	
+	if(advance_pc){
+		data_path -> pc = (data_path -> pc) + 1;
+		data_path -> timeout_count += 0;
+	} else {
+		data_path -> timeout_count += 1; // for debugging, time out if we stall for too long.
+		if(data_path -> timeout_count > TIMEOUT_LIMIT){
+			data_path -> user_mode = false;
+			cout << endl << "TIME OUT: STALLED FOR MORE THAN " << TIMEOUT_LIMIT << " CYCLES" << endl;
+		}
+	}
 
 }
 
-void id2_stage(DataPath *data_path){
+
+// if pipelined is true. we pipeline the decode ex stage.
+void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle, id_ex_latch *id_ex){
 	// if(if_id->empty) {
 	// 	id_ex->decoded_opcode = EMPTY_LATCH;
 	// 	//No operation to be performed
@@ -63,32 +78,44 @@ void id2_stage(DataPath *data_path){
 	// 	return;
 	// }
 
-	// id_ex -> decoded_opcode = opcode;
-	// if( opcode == "addi" || opcode == "subi" || opcode == "add"){
-	// 	// set alu function code
-	// 	if(opcode == "addi" || opcode == "add"){
-	// 		id_ex -> op = 1;
-	// 	} else if (opcode == "subi") {
-	// 		id_ex -> op = 2;
-	// 	} 
-		
-	// 	id_ex->rd = if_id -> ir.operands[1];
-	// 	// decode rs
-	// 	int rs = if_id->ir.operands[2];
-	// 	int rt = if_id->ir.operands[3];
-	// 	//decode rs and set to id_ex rs
-	// 	id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-		
-	// 	if(opcode == "add"){
-	// 		//decode 3rd register
-	// 		id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-	// 	} else {
-	// 		id_ex->rt = rt;
-	// 	}
 
+	Instruction integer_instruction = data_path -> integer_register_file.ir;
+	Instruction float_instruction = data_path -> float_register_file.ir;
 
+	if(integer_instruction.operands[0]){
+		cout << endl << "ID2 STAGE FOR INTEGER INSTRUCTION" << endl;
+		id_ex -> decoded_opcode = (data_path -> decoder.opcodeDecode[integer_instruction.operands[0]].c_str());
 
-		//id_debug(*data_path, id_ex);
+	    // this is vastly simplified, we don't need to have all this conditional logic
+	    // depending on the instruction anymore. we just check if there registers that arent ready.
+	    // if they aren't ready, we can check if the fu they're waiting on is complete. if Qj / Qk
+	    // == NONE then we'll just assume its okay to read, because it isn't waiting on a
+
+		id_ex->ri = integer_instruction.operands[1];
+
+ 		if(scobo -> fu_status[INTEGER].rj == READY){
+
+	     	id_ex -> rj = (data_path -> integer_register_file.registers[data_path -> decoder.registerDecode[integer_instruction.operands[2]]]);
+	     	// update scoreboard
+			scobo -> fu_status[INTEGER].rj = DONE;
+			// other value should be immediate so we should be good to go to exec stage.
+		}
+		if(scobo -> fu_status[INTEGER].rk == READY){
+
+	     	id_ex -> rk = (data_path -> integer_register_file.registers[data_path -> decoder.registerDecode[integer_instruction.operands[3]]]);
+	     	// update scoreboard
+			scobo -> fu_status[INTEGER].rk = DONE;
+			// other value should be immediate so we should be good to go to exec stage.
+		}	
+
+		if(scobo -> fu_status[INTEGER].rj == NOTREADY || scobo -> fu_status[INTEGER].rk == NOTREADY ){
+			id_ex -> nop = true; //one operand isn't ready we need to wait
+		}
+	}
+			
+	data_path -> fetch_buffer.back().status.ID2 = *cycle;
+	
+
 		
 
 	// } else if(opcode == "b"){
@@ -340,17 +367,17 @@ void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
 
 
 void if_debug(DataPath data_path, if_id_latch *if_id){
-	printf("IF STAGE - INSTRUCTION FETCHED: %s \n", data_path.decoder.opcodeDecode[if_id->ir.operands[0]].c_str());
+	// printf("IF STAGE - INSTRUCTION FETCHED: %s \n", data_path.decoder.opcodeDecode[if_id->ir.operands[0]].c_str());
 }
 
 void id_debug(DataPath data_path, id_ex_latch *id_ex){
 	string opcode = id_ex->decoded_opcode;
 	//if(opcode == "add" || opcode == "addi" || opcode == "li" || opcode == "lb" || opcode == "subi"){
-		printf("ID STAGE - INSTUCTION DECODED: %s, ALU OP: %d \n", id_ex -> decoded_opcode.c_str(), id_ex -> op);
+		// printf("ID STAGE - INSTUCTION DECODED: %s, ALU OP: %d \n", id_ex -> decoded_opcode.c_str(), id_ex -> op);
 	//}
 }
 
 void wb_debug(DataPath data_path, mem_wb_latch *mem_wb){
-	string dest_reg = data_path.decoder.registerDecode[mem_wb -> rd];
-	cout << "WB STAGE: wrote - " << data_path.register_file.registers[dest_reg] << " to register - " << dest_reg << endl;
+	// string dest_reg = data_path.decoder.registerDecode[mem_wb -> rd];
+	// cout << "WB STAGE: wrote - " << data_path.register_file.registers[dest_reg] << " to register - " << dest_reg << endl;
 }

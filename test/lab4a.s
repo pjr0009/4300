@@ -1,7 +1,7 @@
 
 	.text
 main:
-addi $1, $2, 3
+subi $1, $2, 3
 addi $1, $2, 3
 addi $1, $2, 3
 addi $1, $2, 3

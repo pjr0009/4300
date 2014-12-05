@@ -2,12 +2,23 @@
 #define _INSTRUCTION_H
 #include <vector>
 #include <string>
+
 using namespace std;
+
+typedef int clock_cycle;
+
+struct instruction_status_entry {
+	clock_cycle ID1; 
+	clock_cycle ID2;
+	clock_cycle EX;
+	clock_cycle WB;
+};
 
 class Instruction {
 
 	public:
-
+	  Instruction();
+	  instruction_status_entry status;
 	  // type field is going to either be r-format, i-format, j-format, label, nop, or syscall
 	  string type;
 

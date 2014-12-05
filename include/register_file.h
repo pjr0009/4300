@@ -5,7 +5,7 @@ using namespace std;
 class RegisterFile {
 	public:
 		RegisterFile();
-		Instruction instruction_register;
+		Instruction ir;
 		map<string, int> registers;
 
 };

@@ -11,21 +11,19 @@ Scoreboard::Scoreboard(int instruction_count, DataPath data_path) {
 		entry.fi = "";
 		entry.fj = "";
 		entry.fk = "";
-		entry.rj = false;
-		entry.rk = false;
+		entry.rj = NOTREADY;
+		entry.rk = NOTREADY;
 		entry.qj = NONE;
 		entry.qk = NONE;
+		switch(i){
+			case INTEGER:
+				entry.name = "Integer";
+				break;
+			case FLOAT:
+				entry.name = "Float";
+				break;
+		}
 		fu_status.push_back(entry);
-	}
-
-	// create instruction status board
-	for (int i=0; i <= instruction_count; i++){
-		struct instruction_status_entry entry;
-		entry.ID1 = 0;
-		entry.ID2 = 0;
-		entry.EX  = 0;
-		entry.WB  = 0;
-		instruction_status.push_back(entry);
 	}
 	// create register status
 
@@ -37,34 +35,36 @@ template<typename T> void printElement(T t, const int& width)
     cout << left << setw(width) << setfill(separator) << t;
 }
 
-void Scoreboard::debug(){
+void Scoreboard::debug(DataPath *data_path){
 	cout << endl;
 	printElement("*************SCOREBOARD***********", 40);
 	cout << endl;
-	printElement("INSTRUCTION STATUS", 40);
+	printElement("\nINSTRUCTION STATUS", 40);
 	cout << endl;
 	cout << endl;
 	printElement("ID1", 10);
 	printElement("ID2", 10);
 	printElement("EX", 10);
 	printElement("WB", 10);
+	cout << endl;
 
 		
 
-	for(int i = 0; i < instruction_status.size(); i++){
-			if(instruction_status[i].ID1 != 0){
-				printElement(instruction_status[i].ID1, 10);
+	for(int i = 0; i < data_path -> fetch_buffer.size(); i++){
+			instruction_status_entry entry = data_path -> fetch_buffer.at(i).status;
+			if(entry.ID1 != 0){
+				printElement(entry.ID1, 10);
 			}
 
-			if(instruction_status[i].ID2 != 0){
-				printElement(instruction_status[i].ID1, 10);
+			if(entry.ID2 != 0){
+				printElement(entry.ID1, 10);
 			}			
 
-			if(instruction_status[i].EX != 0){
-				printElement(instruction_status[i].ID1, 10);
+			if(entry.EX != 0){
+				printElement(entry.ID1, 10);
 			}			
-		    if(instruction_status[i].WB != 0){
-				printElement(instruction_status[i].ID1, 10);
+		    if(entry.WB != 0){
+				printElement(entry.ID1, 10);
 			}
 
 			cout << endl;
@@ -72,8 +72,10 @@ void Scoreboard::debug(){
 
 	// functional unit status
 	cout << endl;
-	printElement("FUNCTIONAL UNIT STATUS", 40);
+	printElement("\nFUNCTIONAL UNIT STATUS\n", 40);
 	cout << endl;
+
+	printElement("UNIT", 10);
 	printElement("BUSY", 10);
 	printElement("OP", 10);
 	printElement("FI", 10);
@@ -87,6 +89,7 @@ void Scoreboard::debug(){
 
 	for(int i = 0; i < NUM_OF_FU; i++){
 		functional_unit_status_entry fu_entry = fu_status[i];
+		printElement(fu_entry.name, 10);
 		printElement(fu_entry.busy, 10);
 		printElement(fu_entry.op, 10);
 		printElement(fu_entry.fi, 10);
@@ -106,8 +109,31 @@ void Scoreboard::debug(){
 			printElement(fu_entry.qk, 10);
 
 		}
-		printElement(fu_entry.rj, 10);
-		printElement(fu_entry.rk, 10);
+		
+		switch (fu_entry.rj){
+			case READY: 
+				printElement("READY", 10);
+				break;
+			case NOTREADY: 
+				printElement("NOTREADY", 10);
+				break;
+			case DONE: 
+				printElement("DONE", 10);
+				break;
+		}
+
+		switch (fu_entry.rk){
+			case READY: 
+				printElement("READY", 10);
+				break;
+			case NOTREADY: 
+				printElement("NOTREADY", 10);
+				break;
+			case DONE: 
+				printElement("DONE", 10);
+				break;
+		}
+
 		cout << endl;
 
 

@@ -7,13 +7,14 @@
 #include "instruction.h"
 
 #define NUM_OF_FU 2
-typedef int clock_cycle;
 
 enum functional_unit {INTEGER, FLOAT, NONE};
-
-
+enum read_status{READY, NOTREADY, DONE};
+ 
 struct functional_unit_status_entry {
 	bool busy; //fu is busy
+	string name; // fu name
+
 	string op; //if fu is processing instruction, what kind?
 	
 	string fi;
@@ -23,27 +24,20 @@ struct functional_unit_status_entry {
 	functional_unit qj;
 	functional_unit qk; //Qj, Qk: Name of functional unit producing regs Fj, Fk
 	
-	bool rj;
-	bool rk;  //Flags indicating when Fj and Fk are ready 
+	read_status rj;
+	read_status rk;  //Flags indicating when Fj and Fk are ready 
 };
 
-struct instruction_status_entry {
-	Instruction instruction;
-	clock_cycle ID1; 
-	clock_cycle ID2;
-	clock_cycle EX;
-	clock_cycle WB;
-};
+
 
 class Scoreboard {
 public:
 	/* index of where the instruction lives in the code segment.*/
 	int instruction_id; 
 	Scoreboard(int instruction_count, DataPath data_path);
-	void debug();
+	void debug(DataPath *data_path);
 	/* instruction status - one entry per instruction    */
 	/* tells the clock cycle at which each stage happens */
-	vector<instruction_status_entry> instruction_status;
 	vector<functional_unit_status_entry> fu_status; 
 
 

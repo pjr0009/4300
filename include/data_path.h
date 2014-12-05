@@ -13,13 +13,16 @@ class DataPath {
 		DataPath(int text_segment_length);
 		
 		bool user_mode;
+		int timeout_count;
 		int fu_output;
 		int pc;
 		Decoder decoder;
 		vector<Instruction> memory;
 		vector<Instruction> fetch_buffer;
 
-		RegisterFile register_file;		
+		RegisterFile integer_register_file;	
+		RegisterFile float_register_file;		
+
 		// map<int, string> data_memory;
 		vector<unsigned char> data_segment;
 

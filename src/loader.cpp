@@ -109,6 +109,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			    	  temp.pop_back(); // remove second comma separator
 			        }
 			        operands.push_back(temp);
+
 			        ++i;
 			    }
 			    else {
