@@ -8,6 +8,7 @@ Scoreboard::Scoreboard(int instruction_count, DataPath data_path) {
 	for (int i=0; i < NUM_OF_FU; i++){
 		struct functional_unit_status_entry entry;
 		entry.busy = false;
+		entry.dirty = false;
 		entry.fi = "";
 		entry.fj = "";
 		entry.fk = "";
@@ -26,7 +27,30 @@ Scoreboard::Scoreboard(int instruction_count, DataPath data_path) {
 		fu_status.push_back(entry);
 	}
 	// create register status
+    register_status["zero"]  = NONE;
+	register_status["$at"]   = NONE;
+	register_status["$v0"]   = NONE;
+	register_status["$v1"]   = NONE;
+	register_status["$a0"]   = NONE;
+	register_status["$a1"]   = NONE;
+	register_status["$a2"]   = NONE;
+	register_status["$a3"]   = NONE;
+	register_status["$t0"]   = NONE;
+	register_status["$t1"]   = NONE;
+	register_status["$t2"]   = NONE;
+	register_status["$t3"]   = NONE;
+	register_status["$t3"]   = NONE;
+	register_status["$t4"]   = NONE;
+	register_status["$t5"]   = NONE;
+	register_status["$t6"]   = NONE;
+	register_status["$t7"]   = NONE;
 
+}
+
+void Scoreboard::invalidate_dirty_bits(){
+	for (int i=0; i < NUM_OF_FU; i++){
+		fu_status[i].dirty = false;
+	}
 }
 
 template<typename T> void printElement(T t, const int& width)
@@ -47,43 +71,25 @@ void Scoreboard::debug(DataPath *data_path){
 	printElement("EXEC", 10);
 	printElement("WRITE", 10);
 	cout << endl;
+	for(int i = 0; i < (data_path -> fetch_buffer.size()); i++){
+	    instruction_status_entry entry = data_path -> fetch_buffer.at(i).status;
+		if(entry.ID1 != 0){
+			printElement(entry.ID1, 10);
+		}
 
-		
+		if(entry.ID2 != 0){
+			printElement(entry.ID2, 10);
+		}			
 
-			instruction_status_entry entry = data_path -> integer_register_file.ir.status;
-			if(entry.ID1 != 0){
-				printElement(entry.ID1, 10);
-			}
+		if(entry.EX != 0){
+			printElement(entry.EX, 10);
+		}			
+	    if(entry.WB != 0){
+			printElement(entry.WB, 10);
+		}
+		cout << endl;
+	}
 
-			if(entry.ID2 != 0){
-				printElement(entry.ID2, 10);
-			}			
-
-			if(entry.EX != 0){
-				printElement(entry.EX, 10);
-			}			
-		    if(entry.WB != 0){
-				printElement(entry.WB, 10);
-			}
-
-			cout << endl;
-		    entry = data_path -> float_register_file.ir.status;
-			if(entry.ID1 != 0){
-				printElement(entry.ID1, 10);
-			}
-
-			if(entry.ID2 != 0){
-				printElement(entry.ID1, 10);
-			}			
-
-			if(entry.EX != 0){
-				printElement(entry.ID1, 10);
-			}			
-		    if(entry.WB != 0){
-				printElement(entry.ID1, 10);
-			}
-
-			cout << endl;
 
 	// functional unit status
 	cout << endl;

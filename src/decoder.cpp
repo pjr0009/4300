@@ -51,8 +51,18 @@ Decoder::Decoder(){
 	opcodeDecode[01011] = "la";
 	opcodeDecode[11111] = "nop";
 
-
-
+	opcodeEnumDecode["addi"] = ADDI;
+	opcodeEnumDecode["subi"] = SUBI; 
+	opcodeEnumDecode["li"] = LI;
+	opcodeEnumDecode["lb"] = LB; 
+	opcodeEnumDecode["b"] = B;
+	opcodeEnumDecode["bge"] = BGE; 
+	opcodeEnumDecode["add"] = ADD;
+	opcodeEnumDecode["beqz"] = BEQZ;
+	opcodeEnumDecode["syscall"] = SYSCALL;
+	opcodeEnumDecode["bne"] = BNE;
+	opcodeEnumDecode["la"] = LA;
+	opcodeEnumDecode["nop"] = NOP;
 
 
 

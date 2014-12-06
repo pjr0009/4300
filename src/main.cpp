@@ -20,8 +20,8 @@ int main(){
 	cout << "Please enter assembly file name: ";
 	cin >> file_name;
     int pipeline;
-    cout << "Pipeline decode/ex stage? (0/1): ";
-    cin >> pipeline;
+    // cout << "Pipeline decode/ex stage? (0/1): ";
+    // cin >> pipeline;
 
 	Loader loader(file_name);
 
@@ -52,7 +52,6 @@ int main(){
         while(data_path.pc < data_path.memory.size() && data_path.user_mode){
             in_pipeline ++;
 
-
             //data_path.memory_write(12, "HELLO WORLD");
             //cout << data_path.memory_read(12) << endl;
         	
@@ -60,10 +59,11 @@ int main(){
         	id1_stage(&data_path, &scobo, &cycle);
 
         	// instruction decode reservation station (out of order possible)
-        	id2_stage(&data_path, &scobo, &cycle, &new_id_ex);
+        	id2_stage(&data_path, &scobo, &cycle);
             
             // print our scoreboard
             scobo.debug(&data_path);
+            scobo.invalidate_dirty_bits();
 
 
 
