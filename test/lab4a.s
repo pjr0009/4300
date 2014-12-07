@@ -9,10 +9,11 @@ li $3, 5
 lid $f2, 1.2
 add  $1, $2, $3
 fmul $f3, $f4, $f2
-nop
 fsub $f5, $f4, $f2
 fadd $f6, $f4, $f2
 li $5, 4
+sd $f2, ($f13)
+ld $f5, ($f13)
 nop
 
 # main:	li $1, 0

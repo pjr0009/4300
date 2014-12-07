@@ -77,6 +77,10 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 				scobo -> fu_status[FLOAT].fk = current_instruction -> operands[3];
 				scobo -> fu_status[FLOAT].rk = DONE;
 			}
+			else if (opcode == "ld" || opcode == "sd"){
+				scobo -> fu_status[FLOAT].fk = current_instruction -> operands[3];
+				scobo -> fu_status[FLOAT].rk = DONE;
+			}
 			else {
 				scobo -> fu_status[FLOAT].fk = data_path -> decoder.registerDecode[current_instruction -> operands[3]];
 				scobo -> fu_status[FLOAT].rk = READY;
@@ -208,6 +212,8 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 			&& scobo -> fu_status[FLOAT].rj == DONE && scobo -> fu_status[FLOAT].rk == DONE){
 			float rj, rk;
 			opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[FLOAT].op];
+	     	float ri = data_path -> register_file.registers[scobo -> fu_status[FLOAT].fi];
+
 	    	rj = data_path -> float_register_file.registers["$t0"];
 	     	if (op == FMUL || op == FSUB || op == FADD)
 	     		rk = data_path -> float_register_file.registers["$t1"];
@@ -231,6 +237,12 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 				case FADD:
 					data_path -> float_register_file.registers["$t2"] = rk + rj;
 					break;
+				case SD:
+					data_path -> float_register_file.registers["$t2"] = ri;
+					break;
+				case LD:
+					data_path -> float_register_file.registers["$t2"] = rj;
+					break;
 				default:
 					// "this can be removed when we put all enum opcode cases"
 					break;
@@ -246,8 +258,10 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 void writeback_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 
 	if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].result_ready){
-				
+		
 		string dest_reg = scobo -> fu_status[INTEGER].fi;
+
+
 		data_path -> register_file.registers[dest_reg] = data_path -> integer_register_file.registers["$t2"];
 		cout << "[WB] :: WRITING " << data_path -> register_file.registers[dest_reg] << " TO REGISTER " << dest_reg << endl;
 
@@ -266,8 +280,12 @@ void writeback_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 	}
 
 	if(scobo -> fu_status[FLOAT].dirty != true && scobo -> fu_status[FLOAT].result_ready){
-				
+		opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[FLOAT].op];	
 		string dest_reg = scobo -> fu_status[FLOAT].fi;
+		
+		if (op == SD)
+			dest_reg = scobo -> fu_status[FLOAT].fj;
+
 		data_path -> register_file.registers[dest_reg] = data_path -> float_register_file.registers["$t2"];
 		cout << "[WB] :: WRITING " << data_path -> register_file.registers[dest_reg] << " TO REGISTER " << dest_reg << endl;
 

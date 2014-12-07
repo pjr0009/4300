@@ -123,7 +123,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			    translate_rformat_to_binary(data_path, j, operands, i);
 			    j++;
 		    }
-		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz" || operands[0] == "bne" || operands[0] == "lid")){
+		    else if(operands.size() > 0 && (operands[0] == "ld" || operands[0] == "sd" || operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz" || operands[0] == "bne" || operands[0] == "lid")){
 		    	translate_iformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
@@ -321,6 +321,20 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 		tokens[2].erase(0, 1); 
 		tokens[2].pop_back();
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);			
+	}
+	else if(tokens[0] == "sd"){
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(01101);
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
+		tokens[2].erase(0, 1); 
+		tokens[2].pop_back();
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
+	}
+	else if(tokens[0] == "ld"){
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(01100);
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
+		tokens[2].erase(0, 1); 
+		tokens[2].pop_back();
+		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
 	}
 	else if(tokens[0] == "la"){
 		// // iterate through memory and replace the offset of label in la
