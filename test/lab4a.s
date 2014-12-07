@@ -3,6 +3,7 @@
 main:
 li $2, 10
 subi $1, $2, 3
+lid $f1, 3.5
 addi $1, $2, 3
 li $3, 5
 add  $1, $2, $3

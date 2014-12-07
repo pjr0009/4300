@@ -32,6 +32,7 @@ class Instruction {
 	  // i - format: operand[0] = rd, operand[1] = immediate value
 	  // j - format: no operands, label to jump to will be stored in the label class member
 	  vector<int> operands;
+	  vector<float> float_operands;
 
 
 };

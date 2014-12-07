@@ -6,6 +6,6 @@ class RegisterFile {
 	public:
 		RegisterFile();
 		int ir;
-		map<string, int> registers;
+		map<string, float> registers;
 
 };

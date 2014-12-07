@@ -50,13 +50,17 @@ int main(){
             //cout << data_path.memory_read(12) << endl;
         	
             // instruction fetch / issue to reservation station (program order)
+            cout << "ENTERING ID1" << endl;
         	id1_stage(&data_path, &scobo, &cycle);
 
         	// instruction decode reservation station (out of order possible)
-        	id2_stage(&data_path, &scobo, &cycle);
+        	cout << "ENTERING ID2" << endl;
+            id2_stage(&data_path, &scobo, &cycle);
 
+            cout << "ENTERING EXE" << endl;
             execute_stage(&data_path, &scobo, &cycle);
 
+            cout << "ENTERING WB" << endl;
             writeback_stage(&data_path, &scobo, &cycle);
             
             // print our scoreboard

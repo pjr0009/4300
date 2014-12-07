@@ -123,7 +123,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			    translate_rformat_to_binary(data_path, j, operands, i);
 			    j++;
 		    }
-		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz" || operands[0] == "bne")){
+		    else if(operands.size() > 0 && (operands[0] == "li" || operands[0] == "lb" || operands[0] == "la" || operands[0] == "bge" || operands[0] == "beqz" || operands[0] == "bne" || operands[0] == "lid")){
 		    	translate_iformat_to_binary(data_path, j, operands, i);
 			    j++;	
 		    }
@@ -297,15 +297,19 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 	string opcode = tokens[0];
 	
 	//ADDI, SUBI instructions
-	if(tokens[0] == "li" || tokens[0] == "la"){
+	if(tokens[0] == "li" || tokens[0] == "la" || tokens[0] == "lid"){
 		if(tokens[0] == "li"){
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(00010);
 		} else if(tokens[0] == "la"){
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(01011);
-
+		} else if(tokens[0] == "lid"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(10001);
 		}
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
-		data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[2].c_str()));
+		if (tokens[0] == "lid")
+			data_path -> memory.at(next_memory_slot_index).float_operands.push_back(atof(tokens[2].c_str()));
+		else
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(atoi(tokens[2].c_str()));
 	}
 	else if(tokens[0] == "lb"){
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(00011);

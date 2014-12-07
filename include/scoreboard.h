@@ -7,7 +7,7 @@
 #include "instruction.h"
 #include <map>
 
-#define NUM_OF_FU 1
+#define NUM_OF_FU 2
 
 enum functional_unit {INTEGER, FLOAT, NONE};
 enum read_status{READY, NOTREADY, DONE};

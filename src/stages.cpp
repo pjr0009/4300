@@ -59,6 +59,29 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		}
 
 	}
+	else if (opcode == "lid") {
+		if (scobo -> fu_status[FLOAT].busy == true){
+			cout << "[ID1] :: FLOAT FU BUSY" << endl;
+			return;
+		}
+		else {
+			// float fu is free
+			data_path -> float_register_file.ir = (data_path -> fetch_buffer.size() - 1);
+			scobo -> fu_status[FLOAT].busy = true;
+			scobo -> fu_status[FLOAT].dirty = true;
+			scobo -> fu_status[FLOAT].op = data_path -> decoder.opcodeDecode[current_instruction -> operands[0]];
+			scobo -> fu_status[FLOAT].fi = data_path -> decoder.registerDecode[current_instruction -> operands[1]];
+			scobo -> fu_status[FLOAT].fj = data_path -> decoder.registerDecode[current_instruction -> operands[2]];
+
+			if (opcode == "lid") {
+				scobo -> fu_status[FLOAT].fk = current_instruction -> operands[3];
+				scobo -> fu_status[FLOAT].rk = DONE;
+			}
+
+			scobo -> fu_status[FLOAT].rj = READY;
+			advance_pc = true;
+		}
+	}
 
 	cout << "[ID1] :: HERE" << endl;
 	 
@@ -81,25 +104,14 @@ void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 
 	// ID STAGE 2 FOR INTEGER FU
 	// Don't do anything if both are already DONE (only possible if they've gone through once)
-	if(scobo -> fu_status[INTEGER].dirty != true && (scobo->fu_status[INTEGER].rj != DONE || scobo->fu_status[INTEGER].rk != DONE)){
-
+	if(scobo -> fu_status[INTEGER].dirty != true && (scobo->fu_status[INTEGER].rj == READY || scobo->fu_status[INTEGER].rk == READY)){
 		// this is vastly simplified, we don't need to have all this conditional logic
 		// depending on the instruction anymore. we just check if there registers that arent ready.
 		// if they aren't ready, we can check if the fu they're waiting on is complete. if Qj / Qk
 		// == NONE then we'll just assume its okay to read, because it isn't waiting on a
 
-		cout << "[ID2] :: fj = " << scobo->fu_status[INTEGER].fj << " fk = " << scobo->fu_status[INTEGER].fk << endl;
+		cout << "[ID2] :INTEGER: fj = " << scobo->fu_status[INTEGER].fj << " fk = " << scobo->fu_status[INTEGER].fk << endl;
 
-		// IF DONE WE ASSUME THEY WERE IMMEDIATE VALUES
-		/**
-		if(scobo -> fu_status[INTEGER].rj == DONE){
-			// place decoded operands into temporary registers, should be fine since they are ready to be read and will execute next up
-	     	data_path -> integer_register_file.registers["$t0"] = scobo -> fu_status[INTEGER].fj;
-		}
-		if(scobo -> fu_status[INTEGER].rk == DONE){
-	     	data_path -> integer_register_file.registers["$t1"] = scobo -> fu_status[INTEGER].fk;
-		}
-		*/
 		if(scobo -> fu_status[INTEGER].rj == READY){
 			// place decoded operands into temporary registers, should be fine since they are ready to be read and will execute next up
 	     	data_path -> integer_register_file.registers["$t0"] = data_path -> register_file.registers[scobo -> fu_status[INTEGER].fj];
@@ -122,15 +134,30 @@ void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 
 	}
 
-	if(scobo -> fu_status[FLOAT].dirty != true){
+	if(scobo -> fu_status[FLOAT].dirty != true && (scobo->fu_status[FLOAT].rj == READY || scobo->fu_status[FLOAT].rk == READY)){
+		cout << "[ID2] :FLOAT: fj = " << scobo->fu_status[FLOAT].fj << " fk = " << scobo->fu_status[FLOAT].fk << endl;
 		
+		if(scobo -> fu_status[FLOAT].rj == READY){
+			data_path -> float_register_file.registers["$t0"] = data_path -> register_file.registers[scobo -> fu_status[FLOAT].fj];
+			scobo -> fu_status[FLOAT].rj = DONE;
+		}
+
+		if(scobo -> fu_status[FLOAT].rk == READY){
+	     	data_path -> float_register_file.registers["$t1"] = data_path -> register_file.registers[scobo -> fu_status[FLOAT].fk];
+			scobo -> fu_status[FLOAT].rk = DONE;
+		}	
+
+		cout << "[ID2] :: Loaded into Temp registers" << endl;
+		data_path ->  fetch_buffer.at(data_path -> float_register_file.ir).status.ID2 = *cycle;
+		scobo -> fu_status[FLOAT].dirty = true;
 	}	
 }
 
 void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 
 	// do for each functional unit, if both are done, it implicitly means we're in the execute stage
-		if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].result_ready != true){
+		if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].result_ready != true
+			&& scobo -> fu_status[INTEGER].rj == DONE && scobo -> fu_status[INTEGER].rk == DONE){
 			int rj, rk;
 			opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[INTEGER].op];
 	     	rj = data_path -> integer_register_file.registers["$t0"];
@@ -162,10 +189,39 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 					break;
 			}
 
-			cout << "[EXE] :: EXE Result Loaded into Temp register" << endl;
+			cout << "[EXE] :INTEGER: EXE Result Loaded into Temp register" << endl;
 			data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).status.EX = *cycle;
 			scobo -> fu_status[INTEGER].dirty = true;
 			scobo -> fu_status[INTEGER].result_ready = true;
+		}
+
+		if(scobo -> fu_status[FLOAT].dirty != true && scobo -> fu_status[FLOAT].result_ready != true
+			&& scobo -> fu_status[FLOAT].rj == DONE && scobo -> fu_status[FLOAT].rk == DONE){
+			float rj, rk;
+			opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[FLOAT].op];
+	    	rj = data_path -> float_register_file.registers["$t0"];
+	     	if (op == ADD)
+	     		rk = data_path -> float_register_file.registers["$t1"];
+	     	else if (op == LID)
+	     		rk = data_path -> fetch_buffer.at(data_path -> float_register_file.ir).float_operands[0];
+	     	else
+	     		rk = data_path -> fetch_buffer.at(data_path -> float_register_file.ir).operands[3];
+
+
+	     	cout << "[EXE] :FLOAT: rj = " << rj << " rk = " << rk << endl;
+			switch(op){
+				case LID:
+					data_path -> float_register_file.registers["$t2"] = rk;
+					break;
+				default:
+					// "this can be removed when we put all enum opcode cases"
+					break;
+			}
+
+			cout << "[EXE] :: EXE Result Loaded into Temp register" << endl;
+			data_path -> fetch_buffer.at(data_path -> float_register_file.ir).status.EX = *cycle;
+			scobo -> fu_status[FLOAT].dirty = true;
+			scobo -> fu_status[FLOAT].result_ready = true;
 		}
 }
 
@@ -189,6 +245,26 @@ void writeback_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 		scobo -> fu_status[INTEGER].rk = NOTREADY;
 
 		data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).status.WB = *cycle;
+	}
+
+	if(scobo -> fu_status[FLOAT].dirty != true && scobo -> fu_status[FLOAT].result_ready){
+				
+		string dest_reg = scobo -> fu_status[FLOAT].fi;
+		data_path -> register_file.registers[dest_reg] = data_path -> float_register_file.registers["$t2"];
+		cout << "[WB] :: WRITING " << data_path -> register_file.registers[dest_reg] << " TO REGISTER " << dest_reg << endl;
+
+
+		//Write back is complete, free the FLOAT fu
+		scobo -> fu_status[FLOAT].busy = false;
+		scobo -> fu_status[FLOAT].dirty = false;
+		scobo -> fu_status[FLOAT].result_ready = false;
+		scobo -> fu_status[FLOAT].fi = "";
+		scobo -> fu_status[FLOAT].fj = "";
+		scobo -> fu_status[FLOAT].fk = "";
+		scobo -> fu_status[FLOAT].rj = NOTREADY;
+		scobo -> fu_status[FLOAT].rk = NOTREADY;
+
+		data_path -> fetch_buffer.at(data_path -> float_register_file.ir).status.WB = *cycle;
 	}
 }
 
