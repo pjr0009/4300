@@ -9,6 +9,7 @@ Scoreboard::Scoreboard(int instruction_count, DataPath data_path) {
 		struct functional_unit_status_entry entry;
 		entry.busy = false;
 		entry.dirty = false;
+		entry.result_ready = false;
 		entry.fi = "";
 		entry.fj = "";
 		entry.fk = "";

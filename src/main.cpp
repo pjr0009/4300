@@ -43,14 +43,8 @@ int main(){
 
    
     int cycle = 1;
-    //increment upon entering, decrement when leaving
-    int in_pipeline = 0;
-    if(pipeline){
-        return -1;
-    } else {
 
         while(data_path.pc < data_path.memory.size() && data_path.user_mode){
-            in_pipeline ++;
 
             //data_path.memory_write(12, "HELLO WORLD");
             //cout << data_path.memory_read(12) << endl;
@@ -60,6 +54,10 @@ int main(){
 
         	// instruction decode reservation station (out of order possible)
         	id2_stage(&data_path, &scobo, &cycle);
+
+            execute_stage(&data_path, &scobo, &cycle);
+
+            writeback_stage(&data_path, &scobo, &cycle);
             
             // print our scoreboard
             scobo.debug(&data_path);
@@ -102,80 +100,9 @@ int main(){
 
             cycle++;
             cout << endl;
-        }
-    }
+  }
 
-    cout << endl << endl << "FLUSHING PIPELINE" << endl << endl;
-
-    //flush pipeline
-    while(in_pipeline > 0){
-        // mem_wb_latch new_mem_wb;
-        // ex_mem_latch new_ex_mem;
-        // id_ex_latch new_id_ex;
-        // if_id_latch new_if_id;
-
-        // switch(in_pipeline){
-        //   //last instruction in pipeline
-        //   case 1:
-        //     cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-        //     wb_stage(&data_path, &old_mem_wb, &in_pipeline);
-            
-        //     cycle++;
-        //     cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
-        //     break;
-
-        //   // 2 instructions still in pipeline
-        //   case 2:
-        //     cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-        //     memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
-
-        //     cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-        //     wb_stage(&data_path, &old_mem_wb, &in_pipeline);
-        //     old_mem_wb = new_mem_wb;
-            
-        //     cycle++;
-        //     cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
-        //     break;
-
-        //   // 3 instructions in pipeline
-        //   case 3:            
-        //     cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
-        //     execute_stage(&data_path, &old_id_ex, &new_ex_mem);
-
-        //     cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-        //     memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
-        //     old_ex_mem = new_ex_mem;
-
-        //     cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-        //     wb_stage(&data_path, &old_mem_wb, &in_pipeline);
-        //     old_mem_wb = new_mem_wb;
-            
-        //     cycle++;
-        //     cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
-        //     break;
-
-        //   case 4:
-        //     cout << "STARTING ID_STAGE CYCLE " << cycle << endl;
-        //     id_stage(&data_path, &old_if_id, &new_id_ex);
-        //     old_if_id = new_if_id;
-
-        //     cout << "STARTING EX_STAGE CYCLE " << cycle << endl;
-        //     execute_stage(&data_path, &old_id_ex, &new_ex_mem);
-        //     old_id_ex = new_id_ex;
-
-        //     cout << "STARTING MEM_STAGE CYCLE " << cycle << endl;
-        //     memory_stage(&data_path, &old_ex_mem, &new_mem_wb);
-        //     old_ex_mem = new_ex_mem;
-
-        //     cout << "STARTING WB_STAGE CYCLE " << cycle << " FOR INSTRUCTION: " << old_mem_wb.decoded_opcode << endl;
-        //     wb_stage(&data_path, &old_mem_wb, &in_pipeline);
-        //     old_mem_wb = new_mem_wb;
-            
-        //     cycle++;
-        //     cout <<  "remaining instructions in pipeline: " << in_pipeline << endl << endl;
-        //     break;
-        //     }
-    }
+    cout << endl << endl << "SIMULATION COMPLETE" << endl << endl;
 
 	return -1;
 }

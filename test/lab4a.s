@@ -1,13 +1,11 @@
 
 	.text
 main:
+li $2, 10
 subi $1, $2, 3
 addi $1, $2, 3
-addi $1, $2, 3
-addi $1, $2, 3
-addi $1, $2, 3
-addi $1, $2, 3
-addi $1, $2, 3
+li $3, 5
+add  $1, $2, $3
 
 # main:	li $1, 0
 # 	li $2, 32

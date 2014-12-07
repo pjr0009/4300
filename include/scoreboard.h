@@ -15,6 +15,8 @@ enum read_status{READY, NOTREADY, DONE};
 struct functional_unit_status_entry {
 	bool busy; //fu is busy
 	bool dirty; // only one fu step per cycle
+	bool result_ready; 
+
 	string name; // fu name
 
 

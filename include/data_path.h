@@ -21,7 +21,8 @@ class DataPath {
 		vector<Instruction> fetch_buffer;
 
 		RegisterFile integer_register_file;	
-		RegisterFile float_register_file;		
+		RegisterFile float_register_file;	
+		RegisterFile register_file;	
 
 		// map<int, string> data_memory;
 		vector<unsigned char> data_segment;

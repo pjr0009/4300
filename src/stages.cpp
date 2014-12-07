@@ -28,9 +28,10 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 	
 
 
-	if(opcode == "addi"|| opcode == "subi" || opcode == "add"){
+	if(opcode == "addi"|| opcode == "subi" || opcode == "add" || opcode == "li"){
 		if(scobo -> fu_status[INTEGER].busy == true){
 			// data_path -> fetch_buffer.pop_back();
+			cout << "[ID1] :: INTEGER FU BUSY" << endl;
 			return;
 			// fu busy; stall aka do nothing.
 		}
@@ -43,16 +44,23 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 			scobo -> fu_status[INTEGER].op = data_path -> decoder.opcodeDecode[current_instruction -> operands[0]];
 			scobo -> fu_status[INTEGER].fi = data_path -> decoder.registerDecode[current_instruction -> operands[1]];
 			scobo -> fu_status[INTEGER].fj = data_path -> decoder.registerDecode[current_instruction -> operands[2]];
-
+			
+			if (opcode == "add") {
+				scobo -> fu_status[INTEGER].fk = data_path -> decoder.registerDecode[current_instruction -> operands[3]];
+				scobo -> fu_status[INTEGER].rk = READY;
+			} else {
+				scobo -> fu_status[INTEGER].fk = current_instruction -> operands[3];
+				scobo -> fu_status[INTEGER].rk = DONE;
+			}
 			// are the operand registers ready (DONE for rk cause it's immediate)
-			scobo -> fu_status[INTEGER].rj = READY;
-			scobo -> fu_status[INTEGER].rk = DONE;
-			// 3rd value is immediate value			
+
+			scobo -> fu_status[INTEGER].rj = READY;	
 			advance_pc = true;
 		}
 
 	}
-	cout << "HERE" << endl;
+
+	cout << "[ID1] :: HERE" << endl;
 	 
 	if(advance_pc){
 		data_path -> pc = (data_path -> pc) + 1;
@@ -61,7 +69,7 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		data_path -> timeout_count += 1; // for debugging, time out if we stall for too long.
 		if(data_path -> timeout_count > TIMEOUT_LIMIT){
 			data_path -> user_mode = false;
-			cout << endl << "TIME OUT: STALLED FOR MORE THAN " << TIMEOUT_LIMIT << " CYCLES" << endl;
+			cout << endl << "[ID1] :: TIME OUT: STALLED FOR MORE THAN " << TIMEOUT_LIMIT << " CYCLES" << endl;
 		}
 	}
 
@@ -72,38 +80,42 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 
 	// ID STAGE 2 FOR INTEGER FU
-	if(scobo -> fu_status[INTEGER].dirty != true){
+	// Don't do anything if both are already DONE (only possible if they've gone through once)
+	if(scobo -> fu_status[INTEGER].dirty != true && (scobo->fu_status[INTEGER].rj != DONE || scobo->fu_status[INTEGER].rk != DONE)){
 
 		// this is vastly simplified, we don't need to have all this conditional logic
 		// depending on the instruction anymore. we just check if there registers that arent ready.
 		// if they aren't ready, we can check if the fu they're waiting on is complete. if Qj / Qk
 		// == NONE then we'll just assume its okay to read, because it isn't waiting on a
 
+		cout << "[ID2] :: fj = " << scobo->fu_status[INTEGER].fj << " fk = " << scobo->fu_status[INTEGER].fk << endl;
+
 		// IF DONE WE ASSUME THEY WERE IMMEDIATE VALUES
+		/**
 		if(scobo -> fu_status[INTEGER].rj == DONE){
 			// place decoded operands into temporary registers, should be fine since they are ready to be read and will execute next up
-	     	data_path -> integer_register_file.registers["$t0"] ;
+	     	data_path -> integer_register_file.registers["$t0"] = scobo -> fu_status[INTEGER].fj;
 		}
 		if(scobo -> fu_status[INTEGER].rk == DONE){
-	     	data_path -> integer_register_file.registers["$t1"] ;
+	     	data_path -> integer_register_file.registers["$t1"] = scobo -> fu_status[INTEGER].fk;
 		}
-
+		*/
 		if(scobo -> fu_status[INTEGER].rj == READY){
 			// place decoded operands into temporary registers, should be fine since they are ready to be read and will execute next up
-	     	data_path -> integer_register_file.registers["$t0"] = data_path -> integer_register_file.registers[scobo -> fu_status[INTEGER].fj];
+	     	data_path -> integer_register_file.registers["$t0"] = data_path -> register_file.registers[scobo -> fu_status[INTEGER].fj];
 	     	// update scoreboard
 			scobo -> fu_status[INTEGER].rj = DONE;
 			// other value should be immediate so we should be good to go to exec stage.
 		}
 		if(scobo -> fu_status[INTEGER].rk == READY){
-	     	data_path -> integer_register_file.registers["$t1"] = data_path -> integer_register_file.registers[scobo -> fu_status[INTEGER].fk];
+	     	data_path -> integer_register_file.registers["$t1"] = data_path -> register_file.registers[scobo -> fu_status[INTEGER].fk];
 	     	// update scoreboard
 			scobo -> fu_status[INTEGER].rk = DONE;
 			// other value should be immediate so we should be good to go to exec stage.
 		}	
-		cout << "Loaded into Temp registers" << endl;
+		cout << "[ID2] :: Loaded into Temp registers" << endl;
 		data_path ->  fetch_buffer.at(data_path -> integer_register_file.ir).status.ID2 = *cycle;
-
+		scobo -> fu_status[INTEGER].dirty = true;
 	// if(scobo -> fu_status[INTEGER].rj == NOTREADY || scobo -> fu_status[INTEGER].rk == NOTREADY ){
 	// 	id_ex -> nop = true; //one operand isn't ready we need to wait
 	// }
@@ -113,279 +125,71 @@ void id2_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 	if(scobo -> fu_status[FLOAT].dirty != true){
 		
 	}	
-
-
-	// } else if(opcode == "b"){
-	// 	id_ex -> op = 0; // nop
-	// 	int last = data_path -> memory.size() - 1;
-	//     for(int i = 1; i < last; ++i) {
-	//     	if(data_path -> memory.at(i).type == "label"){
-	//     		if(if_id->ir.label == data_path -> memory.at(i).label){
-	//     			//update PC (we already set op to 0 so nothing else needs to be done here)
-	//     			data_path -> pc = i;
-	//     			cout << "BRANCH TAKEN! NEW PC: " << id_ex -> new_PC << endl;
-
-	//     		}
-	//     	}
-	//     }
-	// } else if(opcode == "beqz"){
-	// 	id_ex -> op = 3;
-	// 	// decode rs (the operand that we check for zero)
-	// 	id_ex -> rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[if_id -> ir.operands[1]]];
-	// 	int last = data_path -> memory.size() - 1;
-	//     for(int i = 1; i < last; ++i) {
-	//     	if(data_path -> memory.at(i).type == "label"){
-	//     		if(if_id->ir.label == data_path -> memory.at(i).label){
-	//     			//update PC (we already set op to 0 so nothing else needs to be done here)
-	//     			id_ex -> new_PC = i;
-
-	//     			cout << "SET BRANCH TAKEN PC TO: " << id_ex -> new_PC << " VALUE FOR COMPARISON: " << id_ex -> rs << " READ FROM REGISTER: " << if_id -> ir.operands[1]  << endl;
-	//     			break;
-	//     		}
-	//     	}
-	//     }
-	//     // pass along values rs(comparator value), and rt(branch taken address)
-	// 	int rs = if_id->ir.operands[1];
-	// 	int rt = if_id->ir.operands[2];
-	// 	id_ex ->rd = 0;
-	// 	id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-	// 	id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-
-	// } else if(opcode == "bge"){
-	// 	id_ex -> op = 4;
-	// 	int last = data_path -> memory.size() - 1;
-	// 	for(int i = 1; i < last; ++i) {
-	// 		if(data_path -> memory.at(i).type == "label"){
-	// 			if(if_id->ir.label == data_path -> memory.at(i).label){
-	// 				id_ex -> new_PC = i;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	int rs = if_id->ir.operands[1];
-	// 	int rt = if_id->ir.operands[2];
-	// 	id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-	// 	id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-	// }else if (opcode == "bne"){
-	// 	id_ex -> op = 5;
-	// 	int last = data_path -> memory.size() - 1;
-	// 	for(int i = 1; i < last; ++i) {
-	// 		if(data_path -> memory.at(i).type == "label"){
-	// 			if (if_id->ir.label == data_path -> memory.at(i).label){
-	// 				id_ex -> new_PC = i;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	int rs = if_id->ir.operands[1];
-	// 	int rt = if_id->ir.operands[2];
-	// 	id_ex->rs = data_path -> register_file.registers[data_path -> decoder.registerDecode[rs]];
-	// 	id_ex->rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-	// }else if (opcode == "lb"){
-	// 	id_ex -> op = 0;
-	// 	id_ex->rd = if_id -> ir.operands[1];
-	// 	int rt = if_id->ir.operands[2];
-	// 	// substitue value of register reference with actual register value before heading into execution/write back
-	// 	// from that point we execute as if it were an li instruction
-	// 	id_ex -> rt = data_path -> register_file.registers[data_path -> decoder.registerDecode[rt]];
-	// } else if (opcode == "li" || opcode == "la") {
-	// 	id_ex -> op = 0;
-	// 	id_ex->rd = if_id -> ir.operands[1];
-	// 	id_ex->rt = if_id -> ir.operands[2];
-	// } else if (opcode == "syscall"){
-	// 	id_ex -> op = 0; //nop
-	// 	// put $v0 into id_ex.syscall_function
-	// 	id_ex -> syscall_function = data_path -> register_file.registers["$2"];
-	// 	cout << "LOADED SYSCALL FUNCTION NUMBER: " << id_ex -> syscall_function << endl;
- // 	}
-	// id_debug(*data_path, id_ex);
-
 }
+
 void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 
 	// do for each functional unit, if both are done, it implicitly means we're in the execute stage
-		if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].rk == DONE && scobo -> fu_status[INTEGER].rj == DONE){
+		if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].result_ready != true){
 			int rj, rk;
 			opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[INTEGER].op];
 	     	rj = data_path -> integer_register_file.registers["$t0"];
-	     	rk = data_path -> integer_register_file.registers["$t1"];
+
+	     	if (op == ADD)
+	     		rk = data_path -> integer_register_file.registers["$t1"];
+	     	else if (op == LI)
+	     		rk = data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).operands[2];
+	     	else
+	     		rk = data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).operands[3];
+
+
+	     	cout << "[EXE] :: rj = " << rj << " rk = " << rk << endl;
 			switch(op){
 				case ADDI:
+					data_path -> integer_register_file.registers["$t2"] = rj + rk;
 					break;
 				case ADD:
+					data_path -> integer_register_file.registers["$t2"] = rj + rk;
 					break;
 				case SUBI:
+					data_path -> integer_register_file.registers["$t2"] = rj - rk;
 					break;
 				case LI:
+					data_path -> integer_register_file.registers["$t2"] = rk;
 					break;
 				default:
 					// "this can be removed when we put all enum opcode cases"
 					break;
 			}
 
+			cout << "[EXE] :: EXE Result Loaded into Temp register" << endl;
+			data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).status.EX = *cycle;
+			scobo -> fu_status[INTEGER].dirty = true;
+			scobo -> fu_status[INTEGER].result_ready = true;
 		}
-
-		cout << "Loaded into Temp registers" << endl;
-		data_path ->  fetch_buffer.at(data_path -> integer_register_file.ir).status.ID2 = *cycle;
-
-	// string opcode = id_ex -> decoded_opcode;
-	// ex_mem -> decoded_opcode = opcode;
-	// if( opcode == EMPTY_LATCH) {
-	// 	//No operation to be performed
-	// 	return;
-	// }
-	// else if (opcode == "nop") {
-	// 	ex_mem->decoded_opcode = "nop";
-	// 	cout << "EXE STAGE: NOP ENCOUNTERED" << endl;
-	// 	return;
-	// }
-	// //unless nop
-	// if(id_ex -> op > 0 || id_ex -> syscall_function > 0){
-	// 	if(opcode == "addi" || opcode == "subi" || opcode == "add"){
-	// 		cout << "EXECUTING: " << opcode << endl;
-	// 		ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);	
-	// 	}
-	// 	else if (opcode == "syscall"){
-	// 		if(id_ex -> syscall_function == 10){
-	// 			printf("SYSCALL EXIT CALLED: EXITING...\n");
-	// 			data_path -> user_mode = false;
-	// 		} else if (id_ex -> syscall_function == 8){
-	// 			string input;
-	// 			cout << "Please enter a word" << endl;
-	// 			cin >> input;
-	// 			data_path -> memory_write(data_path -> register_file.registers["$4"], input);
-	// 			cout << "WROTE: " << input << " TO MEMORY OFFSET " << data_path -> register_file.registers["$4"] << endl;
-	// 		} 
-	// 		 else if (id_ex -> syscall_function == 4){
-	// 			int addr = data_path -> register_file.registers["$4"];
-	// 			cout << endl << "STARTING OFFSET: " << addr << endl;
-	// 			cout << endl << endl << "SYSCALL PRINT MESSAGE: ";
-	// 			char byte;
-	// 			for(int i =addr; i < data_path->data_segment.size(); i++){
-	// 				if(data_path->memory_read(i) != '\0'){
-	// 					cout << data_path -> memory_read(i);
-	// 				} else {
-	// 					break;
-	// 				}
-	// 			}
- //                cout << endl;
- //                exit(1);
-	// 		} 
-	// 		else{
-	// 			printf("UNKNOWN SYSCALL\n");
-	// 		}
-	// 	} else if (opcode == "beqz"){
-	// 		ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, 0, id_ex -> op);
-	// 		if(ex_mem -> fu_output == 0){
-	// 			cout << "BRANCH TAKEN, NEW PC  " << id_ex -> new_PC << endl;
-	// 			data_path -> pc = id_ex -> new_PC;
-	// 		}
-	// 	} else if (opcode == "bge"){
-	// 		ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);
-	// 		if(ex_mem -> fu_output == 0){
-	// 			cout << "BRANCH TAKEN" << endl;
-	// 			data_path -> pc = id_ex -> new_PC;
-	// 		}
-	// 	} else if (opcode == "bne"){
-	// 		ex_mem -> fu_output = data_path -> functional_unit(id_ex -> rs, id_ex -> rt, id_ex -> op);
-	// 		if (ex_mem -> fu_output == 0){
-	// 			cout << "BRANCH TAKEN" << endl;
-	// 			data_path -> pc = id_ex -> new_PC;
-	// 		}
-	// 	}
-	// }else {
-	// 	cout << "EXE STAGE - NOTHING TO EXECUTE FOR OPCODE: " << opcode << endl;
-
-	// }
-	// if(id_ex -> decoded_opcode !="syscall"){
-	// 	ex_mem -> rd = id_ex -> rd;
-
-	// }
-	// ex_mem -> rt = id_ex -> rt;
 }
 
+void writeback_stage(DataPath *data_path, Scoreboard *scobo, int* cycle){
 
-void memory_stage(DataPath *data_path, ex_mem_latch *ex_mem, mem_wb_latch *mem_wb){
-		// string opcode = ex_mem ->decoded_opcode;
-		// if( opcode == EMPTY_LATCH) {
-		// 	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
-		// 	//No operation to be performed
-		// 	return;
-		// }
-		// else if (opcode == "nop") {
-		// 	mem_wb->decoded_opcode = "nop";
-		// 	cout << "MEM STAGE: NOP ENCOUNTERED" << endl;
-		// 	return;
-		// }
-		// else if (opcode == "lb") {
-		// 	mem_wb -> mdr = (data_path -> memory_read(ex_mem -> rt));
-		// 	cout << "MEM STAGE: LOADING BYTE " << mem_wb -> mdr << " FROM ADDR: " << ex_mem -> rt  << " WRITEBACK SET TO: " << ex_mem -> rd << endl;
-			
-
-		// }
-		// // if we encounter an instruction that hasn't already finished and needs to go to write back stage
-		// // we forward all values for the writeback stage
-		// if(opcode != "lb" && opcode != "beqz" && opcode != "bge" && opcode != "bne"){
-		// 	cout << "MEM STAGE - MEM_WB BEING SET" << endl;
-	 //    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
-  //       	mem_wb -> fu_output = ex_mem -> fu_output;
-  //      		mem_wb -> operand_b = ex_mem -> rt;
-  //       	mem_wb -> rd = ex_mem -> rd;
-
-		// }
-		// else if (opcode == "lb"){
-	 //    	mem_wb -> decoded_opcode = ex_mem -> decoded_opcode;
-  //       	mem_wb -> rd = ex_mem -> rd;
-		// }
-		// else{
-		// 	mem_wb -> rd = SKIP_WRITEBACK; //Implicitly deny the wb_stage
-		// 	cout << "MEM STAGE - MEM_WB IS NOT BEING SET" << endl;
-		// }
-
-}
+	if(scobo -> fu_status[INTEGER].dirty != true && scobo -> fu_status[INTEGER].result_ready){
+				
+		string dest_reg = scobo -> fu_status[INTEGER].fi;
+		data_path -> register_file.registers[dest_reg] = data_path -> integer_register_file.registers["$t2"];
+		cout << "[WB] :: WRITING " << data_path -> register_file.registers[dest_reg] << " TO REGISTER " << dest_reg << endl;
 
 
-void wb_stage (DataPath *data_path, mem_wb_latch *mem_wb, int* count){
-	// if (mem_wb -> rd){
-	// 	// load immediate, value already available in instruction
-	// 	string opcode = mem_wb -> decoded_opcode;
-	// 	if( opcode == EMPTY_LATCH) {
-	// 		//No operation to be performed
-	// 		return;
-	// 	}
-	// 	if (mem_wb -> rd == SKIP_WRITEBACK || opcode == "syscall") {
-	// 		*count = (*count) - 1;
-	// 		cout << "WB STAGE: SKIP WRITEBACK" << endl;
-	// 		return;
-	// 	}
-	// 	if (opcode == "nop") {
-	// 		//No operation to be performed but instruction has moved through the pipe
-	// 		*count = (*count) - 1;
-	// 		cout << "WB STAGE: NOP ENCOUNTERED" << endl;
-	// 		return;
-	// 	}
-	// 	string dest_reg = data_path -> decoder.registerDecode[mem_wb -> rd];
+		//Write back is complete, free the Integer fu
+		scobo -> fu_status[INTEGER].busy = false;
+		scobo -> fu_status[INTEGER].dirty = false;
+		scobo -> fu_status[INTEGER].result_ready = false;
+		scobo -> fu_status[INTEGER].fi = "";
+		scobo -> fu_status[INTEGER].fj = "";
+		scobo -> fu_status[INTEGER].fk = "";
+		scobo -> fu_status[INTEGER].rj = NOTREADY;
+		scobo -> fu_status[INTEGER].rk = NOTREADY;
 
-	// 	if(opcode == "li" || opcode == "la"){
-	// 		data_path -> register_file.registers[dest_reg] = mem_wb -> operand_b;
-	// 		// fwd syscall value
-	// 	}
-	// 	if(opcode == "addi" || opcode == "subi" || opcode == "add"){
-	// 		data_path -> register_file.registers[dest_reg] = mem_wb -> fu_output;
-	// 	}
-	// 	if(opcode == "lb"){
-	// 		cout << "WRITING " << mem_wb -> mdr << " TO REGISTER" << endl;
-	// 		data_path -> register_file.registers[dest_reg] = mem_wb -> mdr;
-	// 	}
-	// 	// load from data, value shoudl be in mdr
-	// 	wb_debug(*data_path, mem_wb);
-	// 	*count = (*count) - 1; 
-
-	// } 
-	// else {
-	// 	cout << "WB STAGE: NOTHING TO WRITE BACK" << endl;
-	// }
-	// instruction done
+		data_path -> fetch_buffer.at(data_path -> integer_register_file.ir).status.WB = *cycle;
+	}
 }
 
 

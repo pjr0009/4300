@@ -9,7 +9,7 @@
 void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle);
 void id2_stage(DataPath *data_path, Scoreboard *scobo, int *cycle);
 void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle);
-void wb_stage(DataPath *data_path, int* count);
+void writeback_stage(DataPath *data_path, Scoreboard *scobo, int* cycle);
 
 
 // need updating
