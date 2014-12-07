@@ -67,6 +67,7 @@ void Scoreboard::debug(DataPath *data_path){
 	printElement("\nINSTRUCTION STATUS", 40);
 	cout << endl;
 	cout << endl;
+	printElement("INSTR OP", 10);
 	printElement("ISSUE", 10);
 	printElement("DECODE", 10);
 	printElement("EXEC", 10);
@@ -74,6 +75,7 @@ void Scoreboard::debug(DataPath *data_path){
 	cout << endl;
 	for(int i = 0; i < (data_path -> fetch_buffer.size()); i++){
 	    instruction_status_entry entry = data_path -> fetch_buffer.at(i).status;
+		printElement(data_path -> decoder.opcodeDecode[ data_path -> fetch_buffer.at(i).operands[0]], 10);
 		if(entry.ID1 != 0){
 			printElement(entry.ID1, 10);
 		}
@@ -96,7 +98,6 @@ void Scoreboard::debug(DataPath *data_path){
 	cout << endl;
 	printElement("\nFUNCTIONAL UNIT STATUS\n", 40);
 	cout << endl;
-
 	printElement("UNIT", 10);
 	printElement("BUSY", 10);
 	printElement("OP", 10);
