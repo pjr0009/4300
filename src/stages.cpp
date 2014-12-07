@@ -61,11 +61,29 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		}
 
 	}
+	else if(opcode == "bge"){
+		if(data_path -> timeout_count == 3){
+			if(current_instruction -> operands[0] >= current_instruction -> operands[1]){
+				for(int i = 0; i < data_path -> memory.size(); i++){
+					if(data_path -> memory.at(i).type == "label" && data_path -> memory.at(i).operands[0] == current_instruction -> operands[0]){
+						data_path -> pc = i;
+						break;
+						advance_pc = true;
+					}
+				}
+			}
+
+		} else {
+			advance_pc = false;
+		}
+
+
+	}
 	else if (opcode == "lid" || opcode == "fmul" || opcode == "fsub" || opcode == "sd" || opcode == "ld" || opcode == "fadd") {
 		if (scobo -> fu_status[FLOAT].busy == true){
 			cout << "[ID1] :: FLOAT FU BUSY" << endl;
 			data_path -> fetch_buffer.pop_back();
-			
+
 			return;
 		}
 		else {
