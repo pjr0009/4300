@@ -32,12 +32,14 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		if(scobo -> fu_status[INTEGER].busy == true){
 			// data_path -> fetch_buffer.pop_back();
 			cout << "[ID1] :: INTEGER FU BUSY" << endl;
+			data_path -> fetch_buffer.pop_back();
 			return;
 			// fu busy; stall aka do nothing.
 		}
 		
 		else {
 			// integer fu is free, set up scoreboard values. and issue instruction
+
 			data_path -> integer_register_file.ir = (data_path -> fetch_buffer.size() - 1);
 			scobo -> fu_status[INTEGER].busy = true;
 			scobo -> fu_status[INTEGER].dirty = true;
@@ -62,6 +64,8 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 	else if (opcode == "lid" || opcode == "fmul" || opcode == "fsub" || opcode == "sd" || opcode == "ld" || opcode == "fadd") {
 		if (scobo -> fu_status[FLOAT].busy == true){
 			cout << "[ID1] :: FLOAT FU BUSY" << endl;
+			data_path -> fetch_buffer.pop_back();
+			
 			return;
 		}
 		else {
