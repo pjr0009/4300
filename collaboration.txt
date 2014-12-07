@@ -1,0 +1,5 @@
+Robert handled the conversion from the pipeline to the scoreboard and implemented the scoreboard itself. He also implemented the branching logic and the Integer Functional Unit.
+
+James handled the Floating Point Functional Units, the expansion of registers to account for floating point operations, and the implementation of the nop and store/load operations.
+
+We collaborated primarily through Skype and email.
