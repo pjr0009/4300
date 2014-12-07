@@ -59,7 +59,7 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 		}
 
 	}
-	else if (opcode == "lid") {
+	else if (opcode == "lid" || opcode == "fmul" || opcode == "fsub" || opcode == "sd" || opcode == "ld" || opcode == "fadd") {
 		if (scobo -> fu_status[FLOAT].busy == true){
 			cout << "[ID1] :: FLOAT FU BUSY" << endl;
 			return;
@@ -72,24 +72,33 @@ void id1_stage(DataPath *data_path, Scoreboard *scobo, int *cycle){
 			scobo -> fu_status[FLOAT].op = data_path -> decoder.opcodeDecode[current_instruction -> operands[0]];
 			scobo -> fu_status[FLOAT].fi = data_path -> decoder.registerDecode[current_instruction -> operands[1]];
 			scobo -> fu_status[FLOAT].fj = data_path -> decoder.registerDecode[current_instruction -> operands[2]];
-
+				cout << scobo->fu_status[FLOAT].fj << endl;
 			if (opcode == "lid") {
 				scobo -> fu_status[FLOAT].fk = current_instruction -> operands[3];
 				scobo -> fu_status[FLOAT].rk = DONE;
+			}
+			else {
+				scobo -> fu_status[FLOAT].fk = data_path -> decoder.registerDecode[current_instruction -> operands[3]];
+				scobo -> fu_status[FLOAT].rk = READY;
 			}
 
 			scobo -> fu_status[FLOAT].rj = READY;
 			advance_pc = true;
 		}
 	}
+	else if (opcode == "nop")
+	{
+		advance_pc = data_path -> timeout_count > 2;
+	}
 
 	cout << "[ID1] :: HERE" << endl;
 	 
 	if(advance_pc){
 		data_path -> pc = (data_path -> pc) + 1;
-		data_path -> timeout_count += 0;
+		data_path -> timeout_count = 0;
 	} else {
 		data_path -> timeout_count += 1; // for debugging, time out if we stall for too long.
+		cout << "[ID1] STALLING ON OPCODE: " << opcode << endl;
 		if(data_path -> timeout_count > TIMEOUT_LIMIT){
 			data_path -> user_mode = false;
 			cout << endl << "[ID1] :: TIME OUT: STALLED FOR MORE THAN " << TIMEOUT_LIMIT << " CYCLES" << endl;
@@ -200,7 +209,7 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 			float rj, rk;
 			opcode op =	data_path -> decoder.opcodeEnumDecode[scobo -> fu_status[FLOAT].op];
 	    	rj = data_path -> float_register_file.registers["$t0"];
-	     	if (op == ADD)
+	     	if (op == FMUL || op == FSUB || op == FADD)
 	     		rk = data_path -> float_register_file.registers["$t1"];
 	     	else if (op == LID)
 	     		rk = data_path -> fetch_buffer.at(data_path -> float_register_file.ir).float_operands[0];
@@ -212,6 +221,15 @@ void execute_stage(DataPath *data_path, Scoreboard *scobo, int* cycle ){
 			switch(op){
 				case LID:
 					data_path -> float_register_file.registers["$t2"] = rk;
+					break;
+				case FMUL:
+					data_path -> float_register_file.registers["$t2"] = rk * rj;
+					break;
+				case FSUB:
+					data_path -> float_register_file.registers["$t2"] = rj - rk;
+					break;
+				case FADD:
+					data_path -> float_register_file.registers["$t2"] = rk + rj;
 					break;
 				default:
 					// "this can be removed when we put all enum opcode cases"

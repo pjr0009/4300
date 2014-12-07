@@ -105,7 +105,7 @@ int Loader::parse_assembly(DataPath* data_path){
 			        if (i == 1 && (operands[0] != "b")){
 			    	  temp.pop_back(); // remove comma separator
 			        }
-			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "bge" || operands[0] == "bne")){
+			        else if(i == 2 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "fmul" || operands[0] == "fsub" || operands[0] == "fadd" || operands[0] == "bge" || operands[0] == "bne")){
 			    	  temp.pop_back(); // remove second comma separator
 			        }
 			        operands.push_back(temp);
@@ -119,7 +119,7 @@ int Loader::parse_assembly(DataPath* data_path){
 
 
 		    // translate instruction based on type
-		    if(operands.size() > 0 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add")){
+		    if(operands.size() > 0 && (operands[0] == "addi" || operands[0] == "subi" || operands[0] == "add" || operands[0] == "fmul" || operands[0] == "fsub" || operands[0] == "fadd")){
 			    translate_rformat_to_binary(data_path, j, operands, i);
 			    j++;
 		    }
@@ -253,18 +253,21 @@ void Loader::translate_rformat_to_binary(DataPath *data_path, int next_memory_sl
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(00001);
 		} else if (opcode == "add"){
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(00110);
-
+		} else if (opcode == "fmul"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(10000);
+		} else if (opcode == "fsub"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(01111);
+		} else if (opcode == "fadd"){
+			data_path -> memory.at(next_memory_slot_index).operands.push_back(01110);
 		}
 		// rd
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		// rs
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
-		
 		// rt
-		if(opcode == "add"){
+		if(opcode == "add" || opcode == "fmul" || opcode == "fsub" || opcode == "fadd"){
 			data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[3]]);
 			data_path -> memory.at(next_memory_slot_index).type = "r-format";
-		
 		}
 
 		//otherwise rt is an immediate value
@@ -352,7 +355,6 @@ void Loader::translate_iformat_to_binary(DataPath* data_path, int next_memory_sl
 		// rs
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[1]]);
 		// rt
-		cout << tokens[2] << endl;
 		data_path -> memory.at(next_memory_slot_index).operands.push_back(data_path -> decoder.registerEncode[tokens[2]]);
 
 		// rd
